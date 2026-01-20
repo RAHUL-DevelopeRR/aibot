@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Lab Viva Assistant{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="navbar-brand">
+                <i class="fas fa-flask"></i> Lab Viva Assistant
+            </a>
+            <ul class="nav-menu">
+                {% if current_user.is_authenticated %}
+                    {% if current_user.role == 'student' %}
+                        <li><a href="{{ url_for('student.dashboard') }}">Dashboard</a></li>
+                        <li><a href="{{ url_for('student.available_vivaes') }}">Available Vivaes</a></li>
+                    {% elif current_user.role == 'teacher' %}
+                        <li><a href="{{ url_for('teacher.dashboard') }}">Dashboard</a></li>
+                        <li><a href="{{ url_for('teacher.view_labs') }}">Labs</a></li>
+                        <li><a href="{{ url_for('teacher.schedule_viva') }}">Schedule Viva</a></li>
+                    {% endif %}
+                    <li class="user-menu">
+                        <a href="#">{{ current_user.name }} <i class="fas fa-chevron-down"></i></a>
+                        <ul class="dropdown">
+                            <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+                        </ul>
+                    </li>
+                {% else %}
+                    <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+                    <li><a href="{{ url_for('auth.register') }}" class="btn-primary">Register</a></li>
+                {% endif %}
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible">
+                    <button type="button" class="alert-close" onclick="this.parentElement.style.display='none';">×</button>
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2024 Lab Viva Assistant. All rights reserved.</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/security.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

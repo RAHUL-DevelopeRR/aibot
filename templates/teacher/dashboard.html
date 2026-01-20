@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+
+{% block title %}Teacher Dashboard - Lab Viva Assistant{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h1>Welcome, {{ current_user.designation or 'Prof.' }} {{ current_user.name }}!</h1>
+        <p class="subtitle">Manage viva schedules and view student marks</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+            <div class="stat-content">
+                <h3>{{ total_schedules }}</h3>
+                <p>Total Schedules</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+            <div class="stat-content">
+                <h3>{{ today_schedules }}</h3>
+                <p>Active Today</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-users"></i></div>
+            <div class="stat-content">
+                <h3>{{ total_students }}</h3>
+                <p>Total Students</p>
+            </div>
+        </div>
+    </div>
+
+    <section class="section">
+        <h2>Quick Actions</h2>
+        <div class="actions-grid">
+            <a href="{{ url_for('teacher.schedule_viva') }}" class="action-card">
+                <i class="fas fa-plus-circle"></i>
+                <h3>Schedule Viva</h3>
+                <p>Schedule viva for an experiment</p>
+            </a>
+            <a href="{{ url_for('teacher.view_students') }}" class="action-card">
+                <i class="fas fa-users"></i>
+                <h3>View Students</h3>
+                <p>See all students and their marks</p>
+            </a>
+            <a href="{{ url_for('teacher.profile') }}" class="action-card">
+                <i class="fas fa-user-cog"></i>
+                <h3>My Profile</h3>
+                <p>Update your profile details</p>
+            </a>
+            <a href="{{ url_for('teacher.view_labs') }}" class="action-card">
+                <i class="fas fa-flask"></i>
+                <h3>View Labs</h3>
+                <p>Browse all labs</p>
+            </a>
+        </div>
+    </section>
+
+    {% for lab_info in labs_data %}
+    <section class="section lab-section">
+        <div class="section-header">
+            <div>
+                <h2><i class="fas fa-flask"></i> {{ lab_info.lab.lab_name }}</h2>
+                <p class="lab-subject">{{ lab_info.subject.subject_name }}</p>
+            </div>
+            <a href="{{ url_for('teacher.view_results', lab_id=lab_info.lab.id) }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-chart-bar"></i> View Results
+            </a>
+        </div>
+
+        <div class="experiments-table">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Exp #</th>
+                        <th>Title</th>
+                        <th>Schedule</th>
+                        <th>Students</th>
+                        <th>Avg Marks</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for exp_info in lab_info.experiments %}
+                    <tr>
+                        <td><strong>{{ exp_info.experiment.experiment_no }}</strong></td>
+                        <td>{{ exp_info.experiment.title }}</td>
+                        <td>
+                            {% if exp_info.schedule %}
+                                <span class="schedule-info">
+                                    {{ exp_info.schedule.scheduled_date }}<br>
+                                    {{ exp_info.schedule.start_time }} - {{ exp_info.schedule.end_time }}
+                                </span>
+                            {% else %}
+                                <span class="not-scheduled">Not Scheduled</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ exp_info.completed_count }}/{{ exp_info.total_students }}</td>
+                        <td>
+                            {% if exp_info.completed_count > 0 %}
+                                {{ "%.1f"|format(exp_info.avg_marks) }}/10
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if exp_info.schedule %}
+                                <a href="{{ url_for('teacher.view_schedule', schedule_id=exp_info.schedule.id) }}" class="btn btn-info btn-sm">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('teacher.schedule_viva') }}" class="btn btn-success btn-sm">
+                                    <i class="fas fa-plus"></i> Schedule
+                                </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% else %}
+    <section class="section">
+        <div class="empty-state">
+            <i class="fas fa-flask"></i>
+            <p>No labs available. Please contact the administrator to set up labs.</p>
+        </div>
+    </section>
+    {% endfor %}
+</div>
+
+<style>
+.dashboard {
+    padding: 30px 0;
+}
+
+.dashboard-header {
+    margin-bottom: 30px;
+}
+
+.dashboard-header h1 {
+    color: #333;
+    margin: 0 0 10px 0;
+}
+
+.subtitle {
+    color: #666;
+    margin: 0;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+}
+
+.stat-content h3 {
+    margin: 0 0 5px 0;
+    font-size: 24px;
+    color: #333;
+}
+
+.stat-content p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.section {
+    background: white;
+    border-radius: 10px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.section h2 {
+    margin: 0 0 20px 0;
+    color: #333;
+}
+
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.action-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: transform 0.3s, box-shadow 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.action-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.action-card i {
+    font-size: 40px;
+    margin-bottom: 15px;
+}
+
+.action-card h3 {
+    margin: 0 0 10px 0;
+}
+
+.action-card p {
+    margin: 0;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.schedules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.schedule-card {
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: all 0.3s;
+}
+
+.schedule-card:hover {
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    border-color: #667eea;
+}
+
+.schedule-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.schedule-header h3 {
+    margin: 0;
+}
+
+.schedule-body {
+    padding: 20px;
+}
+
+.schedule-body p {
+    margin: 10px 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.schedule-body i {
+    color: #667eea;
+    width: 20px;
+    margin-right: 10px;
+}
+
+.schedule-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #e0e0e0;
+    text-align: right;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+}
+
+.empty-state i {
+    font-size: 48px;
+    margin-bottom: 10px;
+    display: block;
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .actions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .schedules-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,241 @@
+/* ==================== VIVA INTERFACE SPECIFIC ==================== */
+
+.viva-container {
+    background: white;
+    min-height: calc(100vh - 100px);
+    padding: 2rem 0;
+}
+
+.viva-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px 12px 0 0;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.viva-header h1 {
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.progress-bar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 1rem 0;
+}
+
+.progress-fill {
+    height: 100%;
+    background: white;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+#progressText {
+    color: white;
+    margin: 1rem 0 0 0;
+}
+
+/* ==================== VIVA LAYOUT ==================== */
+
+.viva-layout {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+.question-navigator {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    height: fit-content;
+    position: sticky;
+    top: 100px;
+}
+
+.question-navigator h3 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+}
+
+.question-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.question-btn {
+    background: #f5f5f5;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 0.75rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #333;
+}
+
+.question-btn:hover {
+    background: #efefef;
+    border-color: #667eea;
+}
+
+.question-btn.active {
+    background: #667eea;
+    border-color: #667eea;
+    color: white;
+}
+
+.q-status {
+    color: #4caf50;
+    font-weight: bold;
+}
+
+/* ==================== VIVA CONTENT ==================== */
+
+.viva-content {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.question-card {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.question-card h2 {
+    color: #667eea;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.question-text {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.marks-label {
+    background: #f5f5f5;
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 1.5rem;
+}
+
+.answer-textarea {
+    width: 100%;
+    min-height: 250px;
+    padding: 1rem;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.95rem;
+    resize: vertical;
+    transition: border-color 0.3s ease;
+}
+
+.answer-textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.answer-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.answer-actions .btn {
+    flex: 1;
+}
+
+/* ==================== RESPONSIVE VIVA ==================== */
+
+@media (max-width: 1024px) {
+    .viva-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .question-navigator {
+        position: relative;
+        top: 0;
+    }
+    
+    .question-list {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .viva-container {
+        padding: 1rem 0;
+    }
+    
+    .viva-header {
+        padding: 1rem;
+    }
+    
+    .viva-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .viva-layout {
+        padding: 0 1rem;
+        gap: 1rem;
+    }
+    
+    .viva-content {
+        padding: 1rem;
+    }
+    
+    .question-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .answer-textarea {
+        min-height: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    .question-list {
+        grid-template-columns: 1fr;
+    }
+    
+    .answer-actions {
+        flex-direction: column;
+    }
+    
+    .answer-textarea {
+        min-height: 120px;
+    }
+}

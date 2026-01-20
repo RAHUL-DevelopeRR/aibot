@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}All Students - Lab Viva Assistant{% endblock %}
+
+{% block content %}
+<div class="students-container">
+    <div class="page-header">
+        <h1><i class="fas fa-users"></i> All Students</h1>
+        <p class="subtitle">View all students and their viva marks</p>
+    </div>
+
+    {% if students_data %}
+    <div class="students-table-wrapper">
+        <table class="students-table">
+            <thead>
+                <tr>
+                    <th>Roll No</th>
+                    <th>Name</th>
+                    {% for lab in labs %}
+                    <th colspan="{{ lab.experiments|length }}">{{ lab.lab_name }}</th>
+                    {% endfor %}
+                </tr>
+                <tr class="exp-header">
+                    <th></th>
+                    <th></th>
+                    {% for lab in labs %}
+                        {% for exp in lab.experiments %}
+                        <th>E{{ exp.experiment_no }}</th>
+                        {% endfor %}
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for student_info in students_data %}
+                <tr>
+                    <td><strong>{{ student_info.student.roll_number }}</strong></td>
+                    <td>{{ student_info.student.name }}</td>
+                    {% for lab in labs %}
+                        {% set lab_marks = student_info.marks_by_lab.get(lab.id, {}) %}
+                        {% for mark_info in lab_marks.get('marks', []) %}
+                        <td class="marks-cell {{ 'violated' if mark_info.status == 'violated' else '' }}">
+                            {% if mark_info.marks is not none %}
+                                {{ mark_info.marks }}
+                                {% if mark_info.status == 'violated' %}<span class="v-badge">V</span>{% endif %}
+                            {% else %}
+                                <span class="pending">-</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-users"></i>
+        <p>No students registered yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.students-container {
+    padding: 30px 0;
+}
+
+.page-header {
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.subtitle {
+    color: #666;
+    margin: 0;
+}
+
+.students-table-wrapper {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
+}
+
+.students-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+
+.students-table th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 10px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 14px;
+    border: 1px solid #5a6fd6;
+}
+
+.students-table .exp-header th {
+    background: #f0f0f0;
+    color: #333;
+    padding: 8px;
+    font-size: 12px;
+    border: 1px solid #e0e0e0;
+}
+
+.students-table td {
+    padding: 12px 10px;
+    border: 1px solid #e0e0e0;
+    text-align: center;
+}
+
+.students-table tbody tr:hover {
+    background: #f9f9f9;
+}
+
+.marks-cell {
+    font-weight: 600;
+    color: #333;
+}
+
+.marks-cell.violated {
+    background: #ffe0e0;
+    color: #dc3545;
+}
+
+.v-badge {
+    font-size: 10px;
+    background: #dc3545;
+    color: white;
+    padding: 2px 5px;
+    border-radius: 3px;
+    margin-left: 3px;
+}
+
+.pending {
+    color: #999;
+}
+
+.empty-state {
+    background: white;
+    border-radius: 10px;
+    padding: 60px 20px;
+    text-align: center;
+    color: #999;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.empty-state i {
+    font-size: 48px;
+    margin-bottom: 15px;
+}
+</style>
+{% endblock %}
