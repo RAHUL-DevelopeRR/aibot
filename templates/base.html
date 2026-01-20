@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{% block title %}Lab Viva Assistant{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -18,10 +19,12 @@
                     {% if current_user.role == 'student' %}
                         <li><a href="{{ url_for('student.dashboard') }}">Dashboard</a></li>
                         <li><a href="{{ url_for('student.available_vivaes') }}">Available Vivaes</a></li>
+                        <li><a href="{{ url_for('chatbot.chatbot_widget') }}"><i class="fas fa-robot"></i> AI Assistant</a></li>
                     {% elif current_user.role == 'teacher' %}
                         <li><a href="{{ url_for('teacher.dashboard') }}">Dashboard</a></li>
                         <li><a href="{{ url_for('teacher.view_labs') }}">Labs</a></li>
                         <li><a href="{{ url_for('teacher.schedule_viva') }}">Schedule Viva</a></li>
+                        <li><a href="{{ url_for('chatbot.chatbot_widget') }}"><i class="fas fa-robot"></i> AI Assistant</a></li>
                     {% endif %}
                     <li class="user-menu">
                         <a href="#">{{ current_user.name }} <i class="fas fa-chevron-down"></i></a>
@@ -62,6 +65,9 @@
     </footer>
 
     <script src="{{ url_for('static', filename='js/security.js') }}"></script>
+    {% if current_user.is_authenticated %}
+    <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
+    {% endif %}
     {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from datetime import datetime
 
-from app import db
+from extensions import db
 from models.user import StudentAnswer, VivaSession, LabConfig, Experiment
 from services.gemini_service import get_gemini_service
 from services.sheets_service import get_sheets_service

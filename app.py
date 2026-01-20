@@ -1,13 +1,9 @@
 from flask import Flask, render_template, redirect, url_for
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
-from flask_wtf.csrf import CSRFProtect, generate_csrf
+from flask_login import current_user
+from flask_wtf.csrf import generate_csrf
 from config import config
+from extensions import db, login_manager, csrf
 import os
-
-db = SQLAlchemy()
-login_manager = LoginManager()
-csrf = CSRFProtect()
 
 
 def create_app(config_name='development'):
@@ -27,49 +23,54 @@ def create_app(config_name='development'):
     login_manager.login_message = 'Please log in to access this page.'
     login_manager.login_message_category = 'info'
     
+    # User loader - must be outside app_context
+    @login_manager.user_loader
+    def load_user(user_id):
+        from models.user import User
+        return User.query.get(int(user_id))
+    
+    # Register blueprints - outside app_context
+    from routes.auth_routes import auth_bp
+    from routes.student_routes import student_bp
+    from routes.teacher_routes import teacher_bp
+    from routes.api_routes import api_bp
+    from routes.chatbot_routes import chatbot_bp
+    
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(student_bp, url_prefix='/student')
+    app.register_blueprint(teacher_bp, url_prefix='/teacher')
+    app.register_blueprint(api_bp, url_prefix='/api')
+    app.register_blueprint(chatbot_bp, url_prefix='/chatbot')
+    
+    # Create tables - needs app_context
     with app.app_context():
-        # Register blueprints
-        from routes.auth_routes import auth_bp
-        from routes.student_routes import student_bp
-        from routes.teacher_routes import teacher_bp
-        from routes.api_routes import api_bp
-        
-        app.register_blueprint(auth_bp)
-        app.register_blueprint(student_bp, url_prefix='/student')
-        app.register_blueprint(teacher_bp, url_prefix='/teacher')
-        app.register_blueprint(api_bp, url_prefix='/api')
-        
-        # Create tables
         db.create_all()
-        
-        # Register error handlers
-        @app.errorhandler(404)
-        def not_found(error):
-            return render_template('errors/404.html'), 404
-        
-        @app.errorhandler(403)
-        def forbidden(error):
-            return render_template('errors/403.html'), 403
-        
-        @app.errorhandler(500)
-        def internal_error(error):
-            db.session.rollback()
-            return render_template('errors/500.html'), 500
-        
-        # Home route
-        @app.route('/')
-        def index():
-            from flask_login import current_user
+    
+    # Register error handlers
+    @app.errorhandler(404)
+    def not_found(error):
+        return render_template('errors/404.html'), 404
+    
+    @app.errorhandler(403)
+    def forbidden(error):
+        return render_template('errors/403.html'), 403
+    
+    @app.errorhandler(500)
+    def internal_error(error):
+        db.session.rollback()
+        return render_template('errors/500.html'), 500
+    
+    # Home route
+    @app.route('/')
+    def index():
+        if current_user.is_authenticated:
+            if current_user.role == 'student':
+                return redirect(url_for('student.dashboard'))
+            if current_user.role == 'teacher':
+                return redirect(url_for('teacher.dashboard'))
+        return redirect(url_for('auth.login'))
 
-            if current_user.is_authenticated:
-                if current_user.role == 'student':
-                    return redirect(url_for('student.dashboard'))
-                if current_user.role == 'teacher':
-                    return redirect(url_for('teacher.dashboard'))
-
-            return redirect(url_for('auth.login'))
-
-    # Make csrf_token available in templates and generate cookie
+    # Make csrf_token available in templates
     @app.context_processor
     def inject_csrf_token():
         return dict(csrf_token=generate_csrf)

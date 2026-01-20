@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from datetime import datetime, date
 from functools import wraps
 
-from app import db
+from extensions import db
 from models.user import VivaSchedule, VivaSession, Subject, LabConfig, User, Experiment, TeacherSubject, StudentAnswer
 from services.sheets_service import get_sheets_service
 
