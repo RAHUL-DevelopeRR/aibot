@@ -161,7 +161,8 @@ def schedule_viva():
     
     return render_template('teacher/schedule_viva.html', 
                          labs=labs, 
-                         experiments_by_lab=experiments_by_lab)
+                         experiments_by_lab=experiments_by_lab,
+                         now=datetime.now())
 
 
 @teacher_bp.route('/schedule/<int:schedule_id>')

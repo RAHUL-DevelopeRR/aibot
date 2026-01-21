@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}Lab Results - Lab Viva Assistant{% endblock %}
+
+{% block content %}
+<div class="results-container">
+    <div class="page-header">
+        <div class="header-content">
+            <h1><i class="fas fa-chart-bar"></i> {{ lab_config.lab_name }} - Results</h1>
+            <p class="subtitle">View student marks for all experiments</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('teacher.export_marks', lab_id=lab_config.id) }}" class="btn btn-secondary">
+                <i class="fas fa-file-export"></i> Export to Sheets
+            </a>
+            <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    {% for exp_data in experiments_data %}
+    <div class="experiment-card">
+        <div class="experiment-header">
+            <h3>Experiment {{ exp_data.experiment.experiment_no }}: {{ exp_data.experiment.title }}</h3>
+            <div class="experiment-stats">
+                <span class="stat">
+                    <i class="fas fa-users"></i> {{ exp_data.completed_count }}/{{ exp_data.total_attempted }} completed
+                </span>
+                <span class="stat">
+                    <i class="fas fa-star"></i> Avg: {{ exp_data.avg_marks }}/{{ exp_data.experiment.total_marks }}
+                </span>
+            </div>
+        </div>
+        
+        {% if exp_data.students %}
+        <div class="students-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Roll Number</th>
+                        <th>Student Name</th>
+                        <th>Status</th>
+                        <th>Marks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student_data in exp_data.students %}
+                    <tr class="status-{{ student_data.status }}">
+                        <td>{{ student_data.student.roll_number }}</td>
+                        <td>{{ student_data.student.name }}</td>
+                        <td>
+                            <span class="status-badge {{ student_data.status }}">
+                                {{ student_data.status|capitalize }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if student_data.status in ['completed', 'violated'] %}
+                                <strong>{{ student_data.marks }}</strong>/{{ exp_data.experiment.total_marks }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="no-data">No students have attempted this experiment yet.</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+.results-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 30px 0;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.header-content h1 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.subtitle {
+    color: #666;
+    margin: 0;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.experiment-card {
+    background: white;
+    border-radius: 10px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.experiment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.experiment-header h3 {
+    margin: 0;
+    color: #333;
+}
+
+.experiment-stats {
+    display: flex;
+    gap: 20px;
+}
+
+.stat {
+    color: #666;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.students-table {
+    overflow-x: auto;
+}
+
+.students-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.students-table th,
+.students-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.students-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+}
+
+.students-table tr:hover {
+    background: #f8f9fa;
+}
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-badge.completed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.violated {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.status-badge.in_progress {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-badge.pending {
+    background: #e2e3e5;
+    color: #383d41;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+}
+
+.btn-secondary {
+    background: #28a745;
+    color: white;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 2px solid #667eea;
+    color: #667eea;
+}
+
+.no-data {
+    color: #999;
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+}
+</style>
+{% endblock %}

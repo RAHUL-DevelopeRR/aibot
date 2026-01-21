@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}View Labs - Lab Viva Assistant{% endblock %}
+
+{% block content %}
+<div class="labs-container">
+    <div class="page-header">
+        <h1><i class="fas fa-flask"></i> All Labs</h1>
+        <p class="subtitle">View all subjects and their lab configurations</p>
+    </div>
+
+    {% if subjects %}
+        {% for subject in subjects %}
+        <div class="subject-card">
+            <div class="subject-header">
+                <h2>{{ subject.subject_name }}</h2>
+                <span class="subject-code">{{ subject.subject_code }}</span>
+            </div>
+            <p class="subject-description">{{ subject.description }}</p>
+            
+            {% if subject.labs %}
+                {% for lab in subject.labs %}
+                <div class="lab-card">
+                    <div class="lab-header">
+                        <h3><i class="fas fa-microscope"></i> {{ lab.lab_name }}</h3>
+                        <span class="experiment-count">{{ lab.total_experiments }} Experiments</span>
+                    </div>
+                    <p>{{ lab.description }}</p>
+                    
+                    {% if lab.experiments %}
+                    <div class="experiments-list">
+                        <h4>Experiments:</h4>
+                        <ul>
+                            {% for exp in lab.experiments %}
+                            <li>
+                                <strong>Exp {{ exp.experiment_no }}:</strong> {{ exp.title }}
+                                <span class="exp-marks">({{ exp.total_marks }} marks)</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="lab-actions">
+                        <a href="{{ url_for('teacher.view_results', lab_id=lab.id) }}" class="btn btn-primary">
+                            <i class="fas fa-chart-bar"></i> View Results
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="no-data">No labs configured for this subject.</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-folder-open"></i>
+            <p>No subjects found.</p>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.labs-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 30px 0;
+}
+
+.page-header {
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.subtitle {
+    color: #666;
+    margin: 0;
+}
+
+.subject-card {
+    background: white;
+    border-radius: 10px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.subject-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.subject-header h2 {
+    margin: 0;
+    color: #333;
+}
+
+.subject-code {
+    background: #667eea;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+.subject-description {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.lab-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 15px;
+    border-left: 4px solid #667eea;
+}
+
+.lab-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.lab-header h3 {
+    margin: 0;
+    color: #333;
+    font-size: 18px;
+}
+
+.experiment-count {
+    background: #e8f4fd;
+    color: #667eea;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 13px;
+}
+
+.experiments-list {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.experiments-list h4 {
+    margin: 0 0 10px 0;
+    color: #333;
+    font-size: 15px;
+}
+
+.experiments-list ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.experiments-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+    color: #555;
+}
+
+.experiments-list li:last-child {
+    border-bottom: none;
+}
+
+.exp-marks {
+    color: #999;
+    font-size: 13px;
+}
+
+.lab-actions {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.no-data {
+    color: #999;
+    font-style: italic;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+}
+
+.empty-state i {
+    font-size: 50px;
+    margin-bottom: 15px;
+}
+</style>
+{% endblock %}

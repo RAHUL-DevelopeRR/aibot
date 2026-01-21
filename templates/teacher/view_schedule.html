@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}Schedule Details - Lab Viva Assistant{% endblock %}
+
+{% block content %}
+<div class="schedule-container">
+    <div class="page-header">
+        <div class="header-content">
+            <h1><i class="fas fa-calendar-alt"></i> Viva Schedule Details</h1>
+            <p class="subtitle">{{ schedule.experiment.title }}</p>
+        </div>
+        <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-outline">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <div class="schedule-info-card">
+        <div class="info-grid">
+            <div class="info-item">
+                <label>Experiment</label>
+                <span>Exp {{ schedule.experiment.experiment_no }}: {{ schedule.experiment.title }}</span>
+            </div>
+            <div class="info-item">
+                <label>Date</label>
+                <span>{{ schedule.scheduled_date.strftime('%B %d, %Y') if schedule.scheduled_date else 'N/A' }}</span>
+            </div>
+            <div class="info-item">
+                <label>Time</label>
+                <span>{{ schedule.start_time }} - {{ schedule.end_time }}</span>
+            </div>
+            <div class="info-item">
+                <label>Total Slots</label>
+                <span>{{ schedule.total_slots }}</span>
+            </div>
+            <div class="info-item">
+                <label>Status</label>
+                <span class="status-badge {{ schedule.status }}">{{ schedule.status|capitalize }}</span>
+            </div>
+            <div class="info-item">
+                <label>Students Attempted</label>
+                <span>{{ viva_sessions|length }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="sessions-section">
+        <h2><i class="fas fa-users"></i> Student Sessions</h2>
+        
+        {% if viva_sessions %}
+        <div class="sessions-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Roll Number</th>
+                        <th>Student Name</th>
+                        <th>Started At</th>
+                        <th>Status</th>
+                        <th>Marks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for session in viva_sessions %}
+                    <tr>
+                        <td>{{ session.student.roll_number }}</td>
+                        <td>{{ session.student.name }}</td>
+                        <td>{{ session.started_at.strftime('%H:%M:%S') if session.started_at else '-' }}</td>
+                        <td>
+                            <span class="status-badge {{ session.status }}">
+                                {% if session.status == 'violated' %}
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                {% endif %}
+                                {{ session.status|capitalize }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if session.status in ['completed', 'violated'] %}
+                                <strong>{{ session.obtained_marks or 0 }}</strong>/{{ schedule.experiment.total_marks }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-user-clock"></i>
+            <p>No students have attempted this viva yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.schedule-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 30px 0;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+}
+
+.header-content h1 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.subtitle {
+    color: #666;
+    margin: 0;
+}
+
+.schedule-info-card {
+    background: white;
+    border-radius: 10px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.info-item label {
+    font-size: 13px;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-item span {
+    font-size: 16px;
+    color: #333;
+    font-weight: 500;
+}
+
+.sessions-section {
+    background: white;
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.sessions-section h2 {
+    margin: 0 0 20px 0;
+    color: #333;
+    font-size: 20px;
+}
+
+.sessions-table {
+    overflow-x: auto;
+}
+
+.sessions-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.sessions-table th,
+.sessions-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.sessions-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+}
+
+.sessions-table tr:hover {
+    background: #f8f9fa;
+}
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.status-badge.scheduled {
+    background: #e8f4fd;
+    color: #0056b3;
+}
+
+.status-badge.active {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-badge.completed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.violated {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.status-badge.in_progress {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 2px solid #667eea;
+    color: #667eea;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #999;
+}
+
+.empty-state i {
+    font-size: 40px;
+    margin-bottom: 15px;
+}
+</style>
+{% endblock %}
