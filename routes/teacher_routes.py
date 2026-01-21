@@ -6,6 +6,7 @@ from functools import wraps
 from extensions import db
 from models.user import VivaSchedule, VivaSession, Subject, LabConfig, User, Experiment, TeacherSubject, StudentAnswer
 from services.sheets_service import get_sheets_service
+from services.sync_service import sync_experiments_from_sheets, sync_teachers_from_sheets
 
 teacher_bp = Blueprint('teacher', __name__)
 
@@ -131,10 +132,13 @@ def schedule_viva():
                 flash('Cannot schedule viva in the past.', 'danger')
                 return redirect(url_for('teacher.schedule_viva'))
             
+            # Convert string date to date object for SQLite
+            scheduled_date_obj = datetime.strptime(scheduled_date, "%Y-%m-%d").date()
+            
             schedule = VivaSchedule(
                 teacher_id=current_user.id,
                 experiment_id=experiment_id,
-                scheduled_date=scheduled_date,
+                scheduled_date=scheduled_date_obj,
                 start_time=start_time,
                 end_time=end_time,
                 total_slots=total_slots,
@@ -323,3 +327,18 @@ def export_marks(lab_id):
         flash('Failed to export marks. Check server logs.', 'danger')
     
     return redirect(url_for('teacher.view_results', lab_id=lab_id))
+
+
+@teacher_bp.route('/sync-from-sheets')
+@login_required
+@teacher_required
+def sync_from_sheets():
+    """Sync experiments and labs from Google Sheets"""
+    result = sync_experiments_from_sheets()
+    
+    if result['success']:
+        flash(result['message'], 'success')
+    else:
+        flash(result['message'], 'danger')
+    
+    return redirect(url_for('teacher.dashboard'))
