@@ -39,7 +39,7 @@
                 <div class="form-group">
                     <label for="scheduled_date">Date</label>
                     <input type="date" id="scheduled_date" name="scheduled_date" required
-                           min="{{ now().strftime('%Y-%m-%d') if now else '' }}">
+                           min="{{ now.strftime('%Y-%m-%d') if now else '' }}">
                 </div>
             </div>
             

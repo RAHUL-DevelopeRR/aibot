@@ -11,53 +11,51 @@
 
     <form method="POST" class="profile-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        
+
         <div class="form-section">
             <h3>Personal Information</h3>
-            
+
             <div class="form-group">
-                <label for="name">Full Name</label>
+                <label for="name"><i class="fas fa-user"></i> Full Name</label>
                 <input type="text" id="name" name="name" value="{{ current_user.name }}" required>
             </div>
-            
+
             <div class="form-group">
-                <label for="email">Email (read-only)</label>
+                <label for="email"><i class="fas fa-envelope"></i> Email (read-only)</label>
                 <input type="email" id="email" value="{{ current_user.email }}" disabled>
             </div>
-            
+
             <div class="form-group">
-                <label for="designation">Designation</label>
-                <input type="text" id="designation" name="designation" 
-                       value="{{ current_user.designation or '' }}" 
-                       placeholder="e.g., Assistant Professor">
+                <label for="designation"><i class="fas fa-id-badge"></i> Designation</label>
+                <input type="text" id="designation" name="designation" value="{{ current_user.designation or '' }}"
+                    placeholder="e.g., Assistant Professor">
             </div>
-            
+
             <div class="form-group">
-                <label for="department">Department</label>
-                <input type="text" id="department" name="department" 
-                       value="{{ current_user.department or '' }}"
-                       placeholder="e.g., Computer Science">
+                <label for="department"><i class="fas fa-building"></i> Department</label>
+                <input type="text" id="department" name="department" value="{{ current_user.department or '' }}"
+                    placeholder="e.g., Computer Science">
             </div>
         </div>
 
         <div class="form-section">
             <h3>Years Handling</h3>
             <p class="form-help">Select the years you teach</p>
-            
+
             <div class="checkbox-group">
                 <label class="checkbox-item">
-                    <input type="checkbox" name="years" value="II" 
-                           {% if current_user.years_handling and 'II' in current_user.years_handling %}checked{% endif %}>
+                    <input type="checkbox" name="years" value="II" {% if current_user.years_handling and 'II' in
+                        current_user.years_handling %}checked{% endif %}>
                     <span>II Year</span>
                 </label>
                 <label class="checkbox-item">
-                    <input type="checkbox" name="years" value="III"
-                           {% if current_user.years_handling and 'III' in current_user.years_handling %}checked{% endif %}>
+                    <input type="checkbox" name="years" value="III" {% if current_user.years_handling and 'III' in
+                        current_user.years_handling %}checked{% endif %}>
                     <span>III Year</span>
                 </label>
                 <label class="checkbox-item">
-                    <input type="checkbox" name="years" value="IV"
-                           {% if current_user.years_handling and 'IV' in current_user.years_handling %}checked{% endif %}>
+                    <input type="checkbox" name="years" value="IV" {% if current_user.years_handling and 'IV' in
+                        current_user.years_handling %}checked{% endif %}>
                     <span>IV Year</span>
                 </label>
             </div>
@@ -66,16 +64,16 @@
         <div class="form-section">
             <h3>Assigned Subjects</h3>
             {% if teacher_subjects %}
-                <ul class="subjects-list">
-                    {% for ts in teacher_subjects %}
-                        <li>
-                            <strong>{{ ts.subject.subject_name }}</strong> 
-                            <span class="badge">{{ ts.year or 'All Years' }}</span>
-                        </li>
-                    {% endfor %}
-                </ul>
+            <ul class="subjects-list">
+                {% for ts in teacher_subjects %}
+                <li>
+                    <strong>{{ ts.subject.subject_name }}</strong>
+                    <span class="badge">{{ ts.year or 'All Years' }}</span>
+                </li>
+                {% endfor %}
+            </ul>
             {% else %}
-                <p class="text-muted">No subjects assigned. Contact administrator to assign subjects.</p>
+            <p class="text-muted">No subjects assigned. Contact administrator to assign subjects.</p>
             {% endif %}
         </div>
 
@@ -89,158 +87,163 @@
 </div>
 
 <style>
-.profile-container {
-    max-width: 700px;
-    margin: 0 auto;
-    padding: 30px 0;
-}
+    .profile-container {
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 30px 0;
+    }
 
-.page-header {
-    margin-bottom: 30px;
-}
+    .page-header {
+        margin-bottom: 30px;
+    }
 
-.page-header h1 {
-    margin: 0 0 10px 0;
-    color: #333;
-}
+    .page-header h1 {
+        margin: 0 0 10px 0;
+        color: #333;
+    }
 
-.subtitle {
-    color: #666;
-    margin: 0;
-}
+    .subtitle {
+        color: #666;
+        margin: 0;
+    }
 
-.profile-form {
-    background: white;
-    border-radius: 10px;
-    padding: 30px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-}
+    .profile-form {
+        background: white;
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
 
-.form-section {
-    margin-bottom: 30px;
-    padding-bottom: 30px;
-    border-bottom: 1px solid #e0e0e0;
-}
+    .form-section {
+        margin-bottom: 30px;
+        padding-bottom: 30px;
+        border-bottom: 1px solid #e0e0e0;
+    }
 
-.form-section:last-of-type {
-    border-bottom: none;
-    margin-bottom: 20px;
-    padding-bottom: 0;
-}
+    .form-section:last-of-type {
+        border-bottom: none;
+        margin-bottom: 20px;
+        padding-bottom: 0;
+    }
 
-.form-section h3 {
-    margin: 0 0 20px 0;
-    color: #333;
-    font-size: 18px;
-}
+    .form-section h3 {
+        margin: 0 0 20px 0;
+        color: #333;
+        font-size: 18px;
+    }
 
-.form-group {
-    margin-bottom: 20px;
-}
+    .form-group {
+        margin-bottom: 20px;
+    }
 
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 500;
-    color: #333;
-}
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #333;
+    }
 
-.form-group input {
-    width: 100%;
-    padding: 12px 15px;
-    border: 2px solid #e0e0e0;
-    border-radius: 8px;
-    font-size: 16px;
-    transition: border-color 0.2s;
-}
+    .form-group label i {
+        margin-right: 8px;
+        color: #667eea;
+    }
 
-.form-group input:focus {
-    outline: none;
-    border-color: #667eea;
-}
+    .form-group input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.2s;
+    }
 
-.form-group input:disabled {
-    background: #f5f5f5;
-    color: #999;
-}
+    .form-group input:focus {
+        outline: none;
+        border-color: #667eea;
+    }
 
-.form-help {
-    color: #666;
-    font-size: 14px;
-    margin-bottom: 15px;
-}
+    .form-group input:disabled {
+        background: #f5f5f5;
+        color: #999;
+    }
 
-.checkbox-group {
-    display: flex;
-    gap: 20px;
-}
+    .form-help {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 15px;
+    }
 
-.checkbox-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-}
+    .checkbox-group {
+        display: flex;
+        gap: 20px;
+    }
 
-.checkbox-item input {
-    width: 18px;
-    height: 18px;
-}
+    .checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+    }
 
-.subjects-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
+    .checkbox-item input {
+        width: 18px;
+        height: 18px;
+    }
 
-.subjects-list li {
-    padding: 12px 15px;
-    background: #f9f9f9;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+    .subjects-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
 
-.text-muted {
-    color: #999;
-}
+    .subjects-list li {
+        padding: 12px 15px;
+        background: #f9f9f9;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
 
-.badge {
-    background: #667eea;
-    color: white;
-    padding: 4px 12px;
-    border-radius: 15px;
-    font-size: 12px;
-}
+    .text-muted {
+        color: #999;
+    }
 
-.form-actions {
-    display: flex;
-    gap: 15px;
-}
+    .badge {
+        background: #667eea;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 12px;
+    }
 
-.btn {
-    padding: 12px 25px;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 500;
-    cursor: pointer;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    border: none;
-}
+    .form-actions {
+        display: flex;
+        gap: 15px;
+    }
 
-.btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-}
+    .btn {
+        padding: 12px 25px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: none;
+    }
 
-.btn-secondary {
-    background: #e0e0e0;
-    color: #333;
-}
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-secondary {
+        background: #e0e0e0;
+        color: #333;
+    }
 </style>
 {% endblock %}

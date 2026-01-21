@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,33 +9,67 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
+
 <body>
     <nav class="navbar">
         <div class="nav-container">
             <a href="/" class="navbar-brand">
-                <i class="fas fa-flask"></i> Lab Viva Assistant
+                <span class="brand-icon"><i class="fas fa-atom fa-spin-hover"></i></span>
+                <span class="brand-text">Lab Viva Assistant</span>
             </a>
             <ul class="nav-menu">
                 {% if current_user.is_authenticated %}
-                    {% if current_user.role == 'student' %}
-                        <li><a href="{{ url_for('student.dashboard') }}">Dashboard</a></li>
-                        <li><a href="{{ url_for('student.available_vivaes') }}">Available Vivaes</a></li>
-                        <li><a href="{{ url_for('chatbot.chatbot_widget') }}"><i class="fas fa-robot"></i> AI Assistant</a></li>
-                    {% elif current_user.role == 'teacher' %}
-                        <li><a href="{{ url_for('teacher.dashboard') }}">Dashboard</a></li>
-                        <li><a href="{{ url_for('teacher.view_labs') }}">Labs</a></li>
-                        <li><a href="{{ url_for('teacher.schedule_viva') }}">Schedule Viva</a></li>
-                        <li><a href="{{ url_for('chatbot.chatbot_widget') }}"><i class="fas fa-robot"></i> AI Assistant</a></li>
-                    {% endif %}
-                    <li class="user-menu">
-                        <a href="#">{{ current_user.name }} <i class="fas fa-chevron-down"></i></a>
-                        <ul class="dropdown">
-                            <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
-                        </ul>
-                    </li>
+                {% if current_user.role == 'student' %}
+                <li><a href="{{ url_for('student.dashboard') }}" class="nav-link">
+                        <span class="nav-icon"><i class="fas fa-th-large"></i></span>
+                        <span>Dashboard</span>
+                    </a></li>
+                <li><a href="{{ url_for('student.available_vivaes') }}" class="nav-link">
+                        <span class="nav-icon"><i class="fas fa-tasks"></i></span>
+                        <span>Available Vivaes</span>
+                    </a></li>
+                <li><a href="{{ url_for('chatbot.chatbot_widget') }}" class="nav-link">
+                        <span class="nav-icon ai-icon"><i class="fas fa-magic"></i></span>
+                        <span>AI Assistant</span>
+                    </a></li>
+                {% elif current_user.role == 'teacher' %}
+                <li><a href="{{ url_for('teacher.dashboard') }}" class="nav-link">
+                        <span class="nav-icon"><i class="fas fa-th-large"></i></span>
+                        <span>Dashboard</span>
+                    </a></li>
+                <li><a href="{{ url_for('teacher.view_labs') }}" class="nav-link">
+                        <span class="nav-icon"><i class="fas fa-vial"></i></span>
+                        <span>Labs</span>
+                    </a></li>
+                <li><a href="{{ url_for('teacher.schedule_viva') }}" class="nav-link">
+                        <span class="nav-icon"><i class="fas fa-calendar-alt"></i></span>
+                        <span>Schedule Viva</span>
+                    </a></li>
+                <li><a href="{{ url_for('chatbot.chatbot_widget') }}" class="nav-link">
+                        <span class="nav-icon ai-icon"><i class="fas fa-magic"></i></span>
+                        <span>AI Assistant</span>
+                    </a></li>
+                {% endif %}
+                <li class="user-menu">
+                    <a href="#" class="user-dropdown-trigger">
+                        <span class="user-avatar"><i class="fas fa-user"></i></span>
+                        <span class="user-name">{{ current_user.name }}</span>
+                        <i class="fas fa-angle-down dropdown-arrow"></i>
+                    </a>
+                    <ul class="dropdown">
+                        <li><a href="{{ url_for('auth.logout') }}" class="logout-link">
+                                <i class="fas fa-power-off"></i> Logout
+                            </a></li>
+                    </ul>
+                </li>
                 {% else %}
-                    <li><a href="{{ url_for('auth.login') }}">Login</a></li>
-                    <li><a href="{{ url_for('auth.register') }}" class="btn-primary">Register</a></li>
+                <li><a href="{{ url_for('auth.login') }}" class="nav-link login-link">
+                        <span class="nav-icon"><i class="fas fa-sign-in-alt"></i></span>
+                        <span>Login</span>
+                    </a></li>
+                <li><a href="{{ url_for('auth.register') }}" class="btn-register">
+                        <i class="fas fa-rocket"></i> Get Started
+                    </a></li>
                 {% endif %}
             </ul>
             <div class="hamburger">
@@ -46,14 +81,14 @@
     </nav>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible">
-                    <button type="button" class="alert-close" onclick="this.parentElement.style.display='none';">×</button>
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible">
+        <button type="button" class="alert-close" onclick="this.parentElement.style.display='none';">×</button>
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
     {% endwith %}
 
     <main class="container">
@@ -61,13 +96,28 @@
     </main>
 
     <footer class="footer">
-        <p>&copy; 2024 Lab Viva Assistant. All rights reserved.</p>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <span class="footer-icon"><i class="fas fa-atom"></i></span>
+                <span>Lab Viva Assistant</span>
+            </div>
+            <p>&copy; 2024 Lab Viva Assistant. Made with <i class="fas fa-heart" style="color: #f5576c;"></i> for
+                education.</p>
+        </div>
     </footer>
 
     <script src="{{ url_for('static', filename='js/security.js') }}"></script>
     {% if current_user.is_authenticated %}
     <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
     {% endif %}
+    <script>
+        // Hamburger menu toggle
+        document.querySelector('.hamburger').addEventListener('click', function () {
+            document.querySelector('.nav-menu').classList.toggle('active');
+            this.classList.toggle('active');
+        });
+    </script>
     {% block scripts %}{% endblock %}
 </body>
+
 </html>
