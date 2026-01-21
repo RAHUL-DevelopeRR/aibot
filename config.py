@@ -32,8 +32,13 @@ class ProductionConfig(Config):
     """Production configuration"""
     DEBUG = False
     TESTING = False
-    SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
+    # Handle Render's postgres:// prefix (SQLAlchemy needs postgresql://)
+    _db_url = os.getenv('DATABASE_URL') or os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///app.db')
+    if _db_url and _db_url.startswith('postgres://'):
+        _db_url = _db_url.replace('postgres://', 'postgresql://', 1)
+    SQLALCHEMY_DATABASE_URI = _db_url
     SESSION_COOKIE_SECURE = True
+    SQLALCHEMY_ECHO = False
 
 
 class TestingConfig(Config):
