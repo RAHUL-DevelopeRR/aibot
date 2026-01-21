@@ -20,7 +20,12 @@ except ImportError:
 
 
 class SheetsService:
-    """Service for Google Sheets integration"""
+    """Service for Google Sheets integration
+    
+    Supports two sheets:
+    - Student Sheet (GOOGLE_SHEET_ID): For entering Viva marks for 10 Experiments
+    - Teacher Sheet (GOOGLE_TEACHER_SHEET_ID): For retrieving Teacher details and List of Experiments
+    """
     
     SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
     
@@ -29,9 +34,15 @@ class SheetsService:
             raise ImportError("google-api-python-client and google-auth are required. Install with: pip install google-api-python-client google-auth")
         
         creds_path = os.environ.get('GOOGLE_SHEETS_CREDENTIALS_PATH')
-        self.sheet_id = os.environ.get('GOOGLE_SHEET_ID')
+        # Student Sheet for entering Viva marks
+        self.student_sheet_id = os.environ.get('GOOGLE_SHEET_ID')
+        # Teacher Sheet for retrieving teacher details and experiments
+        self.teacher_sheet_id = os.environ.get('GOOGLE_TEACHER_SHEET_ID')
         
-        if not creds_path or not self.sheet_id:
+        # Keep legacy reference for backward compatibility
+        self.sheet_id = self.student_sheet_id
+        
+        if not creds_path or not self.student_sheet_id:
             raise ValueError("GOOGLE_SHEETS_CREDENTIALS_PATH and GOOGLE_SHEET_ID environment variables are required")
         
         if not os.path.exists(creds_path):
@@ -200,6 +211,282 @@ class SheetsService:
         except Exception as e:
             print(f"Error exporting marks: {e}")
             return False
+    
+    # ==============================================
+    # TEACHER SHEET METHODS
+    # ==============================================
+    
+    def get_teacher_details(self, sheet_name: str = 'Teachers') -> List[Dict]:
+        """
+        Get list of teachers from the Teacher Sheet.
+        Expected columns: Teacher ID, Name, Email, Department, Designation, Subjects
+        
+        Returns:
+            List of teacher dictionaries
+        """
+        if not self.teacher_sheet_id:
+            print("Teacher Sheet ID not configured")
+            return []
+        
+        try:
+            result = self.sheets.values().get(
+                spreadsheetId=self.teacher_sheet_id,
+                range=f'{sheet_name}!A:F'
+            ).execute()
+            
+            values = result.get('values', [])
+            if not values:
+                return []
+            
+            headers = values[0]
+            teachers = []
+            
+            for row in values[1:]:
+                if row:
+                    teacher = {
+                        'teacher_id': row[0] if len(row) > 0 else '',
+                        'name': row[1] if len(row) > 1 else '',
+                        'email': row[2] if len(row) > 2 else '',
+                        'department': row[3] if len(row) > 3 else '',
+                        'designation': row[4] if len(row) > 4 else '',
+                        'subjects': row[5] if len(row) > 5 else ''
+                    }
+                    teachers.append(teacher)
+            
+            return teachers
+        except Exception as e:
+            print(f"Error reading teachers from sheet: {e}")
+            return []
+    
+    def get_experiments_list(self, sheet_name: str = 'Experiments') -> List[Dict]:
+        """
+        Get list of experiments from the Teacher Sheet.
+        Expected columns: Exp No, Experiment Name, Lab Name, Description, Max Marks
+        
+        Returns:
+            List of experiment dictionaries
+        """
+        if not self.teacher_sheet_id:
+            print("Teacher Sheet ID not configured")
+            return []
+        
+        try:
+            result = self.sheets.values().get(
+                spreadsheetId=self.teacher_sheet_id,
+                range=f'{sheet_name}!A:E'
+            ).execute()
+            
+            values = result.get('values', [])
+            if not values:
+                return []
+            
+            headers = values[0]
+            experiments = []
+            
+            for row in values[1:]:
+                if row:
+                    experiment = {
+                        'experiment_no': row[0] if len(row) > 0 else '',
+                        'experiment_name': row[1] if len(row) > 1 else '',
+                        'lab_name': row[2] if len(row) > 2 else '',
+                        'description': row[3] if len(row) > 3 else '',
+                        'max_marks': row[4] if len(row) > 4 else '10'
+                    }
+                    experiments.append(experiment)
+            
+            return experiments
+        except Exception as e:
+            print(f"Error reading experiments from sheet: {e}")
+            return []
+    
+    def get_lab_info(self, sheet_name: str = 'Labs') -> List[Dict]:
+        """
+        Get lab configuration from the Teacher Sheet.
+        Expected columns: Lab ID, Lab Name, Subject, Year, Total Experiments
+        
+        Returns:
+            List of lab configuration dictionaries
+        """
+        if not self.teacher_sheet_id:
+            print("Teacher Sheet ID not configured")
+            return []
+        
+        try:
+            result = self.sheets.values().get(
+                spreadsheetId=self.teacher_sheet_id,
+                range=f'{sheet_name}!A:E'
+            ).execute()
+            
+            values = result.get('values', [])
+            if not values:
+                return []
+            
+            headers = values[0]
+            labs = []
+            
+            for row in values[1:]:
+                if row:
+                    lab = {
+                        'lab_id': row[0] if len(row) > 0 else '',
+                        'lab_name': row[1] if len(row) > 1 else '',
+                        'subject': row[2] if len(row) > 2 else '',
+                        'year': row[3] if len(row) > 3 else '',
+                        'total_experiments': row[4] if len(row) > 4 else '10'
+                    }
+                    labs.append(lab)
+            
+            return labs
+        except Exception as e:
+            print(f"Error reading labs from sheet: {e}")
+            return []
+    
+    # ==============================================
+    # STUDENT SHEET METHODS - Viva Marks Entry
+    # ==============================================
+    
+    def enter_student_viva_marks(
+        self,
+        roll_number: str,
+        student_name: str,
+        experiment_marks: Dict[int, int],
+        sheet_name: str = 'Sheet1'
+    ) -> bool:
+        """
+        Enter viva marks for a student for multiple experiments (1-10).
+        Uses the Student Sheet (GOOGLE_SHEET_ID).
+        
+        Args:
+            roll_number: Student roll number
+            student_name: Student name
+            experiment_marks: Dict mapping experiment number (1-10) to marks
+            sheet_name: Sheet name in the Student Sheet
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            # Get existing data
+            try:
+                result = self.sheets.values().get(
+                    spreadsheetId=self.student_sheet_id,
+                    range=f'{sheet_name}!A:L'
+                ).execute()
+                existing_values = result.get('values', [])
+            except:
+                existing_values = []
+            
+            # Build header if needed
+            if not existing_values:
+                headers = ['Roll Number', 'Name']
+                for i in range(1, 11):
+                    headers.append(f'Exp {i}')
+                existing_values = [headers]
+                # Write headers first
+                self.sheets.values().update(
+                    spreadsheetId=self.student_sheet_id,
+                    range=f'{sheet_name}!A1:L1',
+                    valueInputOption='RAW',
+                    body={'values': [headers]}
+                ).execute()
+            
+            # Find student row
+            student_row = None
+            for idx, row in enumerate(existing_values[1:], start=2):
+                if row and row[0] == roll_number:
+                    student_row = idx
+                    break
+            
+            updates = []
+            
+            if student_row is None:
+                # Add new student row
+                student_row = len(existing_values) + 1
+                # Add roll number and name
+                updates.append({
+                    'range': f'{sheet_name}!A{student_row}:B{student_row}',
+                    'values': [[roll_number, student_name]]
+                })
+            
+            # Update experiment marks
+            for exp_no, marks in experiment_marks.items():
+                if 1 <= exp_no <= 10:
+                    col_index = 1 + exp_no  # A=0, B=1, C=2 (Exp1), ..., L=11 (Exp10)
+                    col_letter = chr(ord('A') + col_index)
+                    updates.append({
+                        'range': f'{sheet_name}!{col_letter}{student_row}',
+                        'values': [[str(marks)]]
+                    })
+            
+            # Batch update
+            if updates:
+                body = {'valueInputOption': 'RAW', 'data': updates}
+                self.sheets.values().batchUpdate(
+                    spreadsheetId=self.student_sheet_id,
+                    body=body
+                ).execute()
+            
+            return True
+            
+        except Exception as e:
+            print(f"Error entering student viva marks: {e}")
+            return False
+    
+    def get_student_marks(self, roll_number: str = None, sheet_name: str = 'Sheet1') -> List[Dict]:
+        """
+        Get student marks from the Student Sheet.
+        
+        Args:
+            roll_number: Optional specific roll number to filter by
+            sheet_name: Sheet name in the Student Sheet
+            
+        Returns:
+            List of student marks dictionaries
+        """
+        try:
+            result = self.sheets.values().get(
+                spreadsheetId=self.student_sheet_id,
+                range=f'{sheet_name}!A:L'
+            ).execute()
+            
+            values = result.get('values', [])
+            if not values or len(values) < 2:
+                return []
+            
+            students_marks = []
+            
+            for row in values[1:]:
+                if row:
+                    student_roll = row[0] if len(row) > 0 else ''
+                    
+                    # Filter by roll number if specified
+                    if roll_number and student_roll != roll_number:
+                        continue
+                    
+                    student_data = {
+                        'roll_number': student_roll,
+                        'name': row[1] if len(row) > 1 else '',
+                        'experiments': {}
+                    }
+                    
+                    # Extract experiment marks (columns C to L = Exp 1 to 10)
+                    for exp_no in range(1, 11):
+                        col_index = 1 + exp_no
+                        if len(row) > col_index:
+                            try:
+                                marks = int(row[col_index]) if row[col_index] else None
+                            except ValueError:
+                                marks = row[col_index]  # Keep as string if not a number
+                            student_data['experiments'][exp_no] = marks
+                        else:
+                            student_data['experiments'][exp_no] = None
+                    
+                    students_marks.append(student_data)
+            
+            return students_marks
+            
+        except Exception as e:
+            print(f"Error reading student marks: {e}")
+            return []
 
 
 # Singleton instance
