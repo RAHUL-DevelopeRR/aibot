@@ -1,6 +1,11 @@
-"""Seed data script for Lab Viva Assistant"""
+"""Seed data script for Lab Viva Assistant
+
+NOTE: Experiments are now loaded from Google Sheets via the sync service.
+This file only creates test users. Use the teacher dashboard to sync experiments.
+"""
 from app import create_app, db
 from models.user import User, Subject, LabConfig, Experiment
+from services.sync_service import sync_experiments_from_sheets
 
 def seed_database():
     app = create_app()
@@ -33,61 +38,20 @@ def seed_database():
             student.set_password('password123')
             db.session.add(student)
         
-        # Create a lab subject
-        subject = Subject.query.filter_by(subject_code='CBB1323').first()
-        if not subject:
-            subject = Subject(
-                subject_code='CBB1323',
-                subject_name='Artificial Intelligence Laboratory',
-                description='Practical implementation of AI algorithms and machine learning techniques',
-                is_lab=True,
-                year='III'
-            )
-            db.session.add(subject)
-            db.session.flush()
-            
-            # Create lab config
-            lab = LabConfig(
-                subject_id=subject.id,
-                lab_name='Artificial Intelligence Laboratory',
-                description='Implementation of various AI algorithms including search techniques, optimization, and machine learning',
-                total_experiments=10,
-                materials_text='Topics include problem solving using search algorithms, heuristic techniques, optimization methods, machine learning classifiers, and chatbot development.'
-            )
-            db.session.add(lab)
-            db.session.flush()
-            
-            # Create 10 experiments - AI Lab (CBB1323)
-            experiments = [
-                ('Implement Water Jug Problem', 'Implementation of the classic Water Jug Problem using state space search and BFS/DFS algorithms to find the solution path.'),
-                ('Implement Monkey Banana Problem', 'Implementation of the Monkey Banana Problem demonstrating goal-based planning and problem solving using AI techniques.'),
-                ('Implement Hill Climbing Problem', 'Implementation of Hill Climbing algorithm, a local search optimization technique for solving optimization problems.'),
-                ('Implementation of Constraint Satisfaction Problem', 'Implementation of CSP solving techniques including backtracking and constraint propagation for problems like N-Queens or Map Coloring.'),
-                ('Implementation of Greedy Heuristic Search Problems', 'Implementation of Greedy Best-First Search algorithm using heuristic functions for efficient pathfinding and optimization.'),
-                ('Implementation of Simulated Annealing Heuristic Search', 'Implementation of Simulated Annealing algorithm, a probabilistic optimization technique inspired by the annealing process in metallurgy.'),
-                ('Implementation of KNN for an application', 'Implementation of K-Nearest Neighbors algorithm for classification tasks such as iris flower classification or handwriting recognition.'),
-                ('Implementation of SVM for an application', 'Implementation of Support Vector Machine algorithm for classification problems with linear and non-linear decision boundaries.'),
-                ('Implementation of Decision Tree for an application', 'Implementation of Decision Tree classifier for classification tasks with visualization of the decision-making process.'),
-                ('Implementation of Simple Chatbot for an application', 'Implementation of a rule-based or AI-powered chatbot using natural language processing techniques for conversational interactions.')
-            ]
-            
-            for i, (title, description) in enumerate(experiments, 1):
-                exp = Experiment(
-                    lab_config_id=lab.id,
-                    experiment_no=i,
-                    title=title,
-                    description=description,
-                    materials_text=f'Study material for {title}',
-                    total_marks=10,
-                    duration_minutes=15
-                )
-                db.session.add(exp)
-        
         db.session.commit()
         print('Seed data created successfully!')
         print('Test credentials:')
         print('  Teacher: teacher@test.com / password123')
         print('  Student: student@test.com / password123')
+        
+        # Auto-sync experiments from Google Sheets
+        print('\nAttempting to sync experiments from Google Sheets...')
+        result = sync_experiments_from_sheets()
+        if result['success']:
+            print(f"✓ {result['message']}")
+        else:
+            print(f"⚠ {result['message']}")
+            print('  You can manually sync from the teacher dashboard.')
 
 if __name__ == '__main__':
     seed_database()

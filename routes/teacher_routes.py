@@ -27,6 +27,16 @@ def teacher_required(f):
 @teacher_required
 def dashboard():
     """Teacher dashboard - shows labs, experiments, schedules and student marks"""
+    
+    # Auto-sync from Google Sheets if no experiments exist
+    total_experiments = Experiment.query.count()
+    if total_experiments == 0:
+        result = sync_experiments_from_sheets()
+        if result['success']:
+            flash(f"Auto-synced: {result['message']}", 'success')
+        else:
+            flash(f"No experiments found. Click 'Sync from Sheets' to load experiments from Google Sheets.", 'info')
+    
     # Get teacher's scheduled vivaes
     schedules = (
         VivaSchedule.query

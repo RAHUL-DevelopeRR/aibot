@@ -1,7 +1,13 @@
 /**
- * Anti-cheat module for viva interface
- * Detects tab switches, window blur, copy/paste, and other violations
- * Immediately reports violations to server which finalizes marks as 0
+ * Enhanced Anti-cheat module for viva interface
+ * 
+ * Security Features:
+ * - Force fullscreen mode on entry
+ * - Auto-submit viva if fullscreen exits
+ * - Detect tab switches and window blur
+ * - Block right-click, copy, paste, cut
+ * - Block keyboard shortcuts (F12, Escape, Tab, Ctrl, Alt)
+ * - Immediately reports violations to server (0 marks)
  */
 
 (function() {
@@ -10,6 +16,7 @@
     let vivaSessionId = null;
     let isVivaActive = false;
     let violationReported = false;
+    let fullscreenEntered = false;
     
     /**
      * Initialize anti-cheat for a viva session
@@ -19,16 +26,90 @@
         vivaSessionId = sessionId;
         isVivaActive = true;
         violationReported = false;
+        fullscreenEntered = false;
         
         // Bind all event listeners
+        bindFullscreenChange();
         bindVisibilityChange();
         bindWindowBlur();
         bindCopyPaste();
         bindContextMenu();
         bindKeyboardShortcuts();
         bindBeforeUnload();
+        bindTextSelection();
         
-        console.log('Anti-cheat initialized for session:', sessionId);
+        console.log('Enhanced Anti-cheat initialized for session:', sessionId);
+        
+        // Request fullscreen after a brief delay
+        setTimeout(() => {
+            requestFullscreen();
+        }, 500);
+    }
+    
+    /**
+     * Request fullscreen mode
+     */
+    function requestFullscreen() {
+        const elem = document.documentElement;
+        
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen().then(() => {
+                fullscreenEntered = true;
+                console.log('Fullscreen entered');
+            }).catch(err => {
+                console.warn('Fullscreen request failed:', err);
+                showFullscreenWarning();
+            });
+        } else if (elem.webkitRequestFullscreen) { // Safari
+            elem.webkitRequestFullscreen();
+            fullscreenEntered = true;
+        } else if (elem.msRequestFullscreen) { // IE11
+            elem.msRequestFullscreen();
+            fullscreenEntered = true;
+        } else {
+            showFullscreenWarning();
+        }
+    }
+    
+    /**
+     * Show fullscreen warning if API not supported
+     */
+    function showFullscreenWarning() {
+        const banner = document.querySelector('.warning-banner');
+        if (banner) {
+            banner.innerHTML = `
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Warning:</strong> Your browser doesn't support fullscreen mode. 
+                Please use Chrome or Firefox for secure viva. Any tab switch will result in <strong>0 marks</strong>.
+            `;
+            banner.style.background = '#f8d7da';
+            banner.style.borderColor = '#f5c6cb';
+            banner.style.color = '#721c24';
+        }
+    }
+    
+    /**
+     * Bind fullscreen change event - auto-submit if exited
+     */
+    function bindFullscreenChange() {
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    }
+    
+    function handleFullscreenChange() {
+        const isFullscreen = !!(
+            document.fullscreenElement ||
+            document.webkitFullscreenElement ||
+            document.mozFullScreenElement ||
+            document.msFullscreenElement
+        );
+        
+        if (!isFullscreen && isVivaActive && fullscreenEntered) {
+            // Fullscreen was exited - this is a violation
+            reportViolation('Fullscreen mode exited - Viva terminated');
+        }
     }
     
     /**
@@ -41,6 +122,7 @@
         }
         
         violationReported = true;
+        isVivaActive = false;
         
         const token = getCookie('csrf_token');
         
@@ -66,6 +148,9 @@
             console.error('Error reporting violation:', error);
             // Still show alert even if API fails
             showViolationAlert(reason);
+            setTimeout(() => {
+                window.location.href = `/student/viva/marks/${vivaSessionId}`;
+            }, 3000);
         });
     }
     
@@ -73,6 +158,11 @@
      * Show violation alert to user
      */
     function showViolationAlert(reason) {
+        // Exit fullscreen first if still in it
+        if (document.fullscreenElement) {
+            document.exitFullscreen().catch(() => {});
+        }
+        
         // Create overlay
         const overlay = document.createElement('div');
         overlay.id = 'violation-overlay';
@@ -82,7 +172,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(220, 53, 69, 0.95);
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -94,11 +184,19 @@
         `;
         
         overlay.innerHTML = `
-            <i class="fas fa-exclamation-triangle" style="font-size: 80px; margin-bottom: 20px;"></i>
-            <h1 style="font-size: 32px; margin-bottom: 10px;">Violation Detected!</h1>
-            <p style="font-size: 18px; margin-bottom: 20px;">${reason}</p>
-            <p style="font-size: 16px;">Your viva has been terminated with <strong>0 marks</strong>.</p>
-            <p style="font-size: 14px; margin-top: 20px;">Redirecting to results page...</p>
+            <i class="fas fa-exclamation-triangle" style="font-size: 80px; margin-bottom: 20px; animation: pulse 1s infinite;"></i>
+            <h1 style="font-size: 36px; margin-bottom: 15px; font-weight: 700;">VIOLATION DETECTED!</h1>
+            <p style="font-size: 20px; margin-bottom: 10px; max-width: 500px;">${reason}</p>
+            <div style="background: rgba(0,0,0,0.3); padding: 20px 40px; border-radius: 10px; margin-top: 20px;">
+                <p style="font-size: 24px; font-weight: 600; margin: 0;">Your Score: <span style="font-size: 32px;">0 / 10</span></p>
+            </div>
+            <p style="font-size: 14px; margin-top: 30px; opacity: 0.8;">Redirecting to results page in 3 seconds...</p>
+            <style>
+                @keyframes pulse {
+                    0%, 100% { transform: scale(1); }
+                    50% { transform: scale(1.1); }
+                }
+            </style>
         `;
         
         document.body.appendChild(overlay);
@@ -121,13 +219,13 @@
     function bindWindowBlur() {
         window.addEventListener('blur', function() {
             if (isVivaActive) {
-                reportViolation('Window blur detected - You switched to another window');
+                reportViolation('Window focus lost - You switched to another window');
             }
         });
     }
     
     /**
-     * Prevent and detect copy/paste
+     * Prevent and detect copy/paste/cut
      */
     function bindCopyPaste() {
         document.addEventListener('copy', function(e) {
@@ -159,50 +257,143 @@
         document.addEventListener('contextmenu', function(e) {
             if (isVivaActive) {
                 e.preventDefault();
+                showWarningToast('Right-click is disabled during viva');
                 return false;
             }
         });
     }
     
     /**
-     * Prevent common keyboard shortcuts
+     * Prevent text selection
+     */
+    function bindTextSelection() {
+        document.addEventListener('selectstart', function(e) {
+            if (isVivaActive) {
+                // Allow selection in MCQ options for clicking
+                if (e.target.closest('.mcq-option') || e.target.closest('input')) {
+                    return true;
+                }
+                e.preventDefault();
+                return false;
+            }
+        });
+    }
+    
+    /**
+     * Prevent keyboard shortcuts - ENHANCED
      */
     function bindKeyboardShortcuts() {
         document.addEventListener('keydown', function(e) {
             if (!isVivaActive) return;
             
-            // Prevent Ctrl+C, Ctrl+V, Ctrl+X
-            if (e.ctrlKey && (e.key === 'c' || e.key === 'v' || e.key === 'x')) {
+            // Block Escape key
+            if (e.key === 'Escape') {
                 e.preventDefault();
+                showWarningToast('Escape key is disabled during viva');
                 return false;
             }
             
-            // Prevent Ctrl+Shift+I (DevTools)
-            if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+            // Block Tab key (prevents tabbing out)
+            if (e.key === 'Tab' && !e.target.closest('.mcq-options')) {
                 e.preventDefault();
-                reportViolation('Developer tools access attempt');
+                showWarningToast('Tab navigation is disabled during viva');
                 return false;
             }
             
-            // Prevent F12 (DevTools)
+            // Block F12 (DevTools)
             if (e.key === 'F12') {
                 e.preventDefault();
-                reportViolation('Developer tools access attempt');
+                reportViolation('Developer tools access attempt (F12)');
                 return false;
             }
             
-            // Prevent Ctrl+U (View Source)
-            if (e.ctrlKey && e.key === 'u') {
+            // Block all Ctrl combinations except radio buttons
+            if (e.ctrlKey) {
                 e.preventDefault();
+                
+                // Report for dangerous shortcuts
+                if (e.key === 'c' || e.key === 'v' || e.key === 'x') {
+                    reportViolation(`Clipboard shortcut detected (Ctrl+${e.key.toUpperCase()})`);
+                } else if (e.shiftKey && e.key === 'I') {
+                    reportViolation('Developer tools access attempt (Ctrl+Shift+I)');
+                } else if (e.key === 'u') {
+                    // View source - just block
+                    showWarningToast('Viewing source is disabled');
+                } else if (e.key === 'p') {
+                    showWarningToast('Printing is disabled during viva');
+                } else if (e.key === 's') {
+                    showWarningToast('Saving is disabled during viva');
+                }
                 return false;
             }
             
-            // Prevent Alt+Tab warning (can't actually prevent, but detect)
-            if (e.altKey && e.key === 'Tab') {
+            // Block all Alt combinations
+            if (e.altKey) {
                 e.preventDefault();
+                if (e.key === 'Tab') {
+                    reportViolation('Alt+Tab detected - Window switching attempted');
+                } else if (e.key === 'F4') {
+                    showWarningToast('Closing window is not allowed during viva');
+                }
+                return false;
+            }
+            
+            // Block other function keys
+            if (['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11'].includes(e.key)) {
+                e.preventDefault();
+                if (e.key === 'F5') {
+                    showWarningToast('Refresh is disabled during viva');
+                } else if (e.key === 'F11') {
+                    // F11 toggles fullscreen - allow but warn
+                    showWarningToast('Use the viva interface, do not toggle fullscreen');
+                }
                 return false;
             }
         });
+    }
+    
+    /**
+     * Show a temporary warning toast
+     */
+    function showWarningToast(message) {
+        // Remove existing toast
+        const existing = document.getElementById('warning-toast');
+        if (existing) existing.remove();
+        
+        const toast = document.createElement('div');
+        toast.id = 'warning-toast';
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+            color: #212529;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            z-index: 99998;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease-out;
+        `;
+        toast.innerHTML = `<i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i>${message}`;
+        
+        // Add animation style
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideUp {
+                from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+                to { opacity: 1; transform: translateX(-50%) translateY(0); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.remove();
+        }, 2500);
     }
     
     /**
@@ -227,7 +418,14 @@
      */
     function disable() {
         isVivaActive = false;
-        console.log('Anti-cheat disabled');
+        violationReported = true; // Prevent further violations
+        
+        // Exit fullscreen
+        if (document.fullscreenElement) {
+            document.exitFullscreen().catch(() => {});
+        }
+        
+        console.log('Anti-cheat disabled - viva submitted');
     }
     
     /**
@@ -252,6 +450,7 @@
     window.AntiCheat = {
         init: init,
         disable: disable,
-        reportViolation: reportViolation
+        reportViolation: reportViolation,
+        requestFullscreen: requestFullscreen
     };
 })();
