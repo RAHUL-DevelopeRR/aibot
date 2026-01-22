@@ -489,6 +489,222 @@ class SheetsService:
             return []
 
 
+    # ==============================================
+    # STUDENT VALIDATION & MARKS - Google Sheets as Source of Truth
+    # ==============================================
+    
+    def validate_student_reg_no(self, reg_no: str, sheet_name: str = 'Sheet1') -> Optional[Dict]:
+        """
+        Validate if a student Reg_No exists in the Google Sheets.
+        Case-insensitive comparison.
+        
+        Args:
+            reg_no: Student registration number (12 digit, e.g., 927623BCB041)
+            sheet_name: Sheet name in the Student Sheet
+            
+        Returns:
+            Student dict if found, None otherwise
+        """
+        try:
+            result = self.sheets.values().get(
+                spreadsheetId=self.student_sheet_id,
+                range=f'{sheet_name}!A:B'
+            ).execute()
+            
+            values = result.get('values', [])
+            if not values or len(values) < 2:
+                return None
+            
+            # Normalize input reg_no for case-insensitive comparison
+            reg_no_upper = reg_no.strip().upper()
+            
+            for row in values[1:]:  # Skip header
+                if row:
+                    sheet_reg_no = (row[0] if len(row) > 0 else '').strip().upper()
+                    if sheet_reg_no == reg_no_upper:
+                        return {
+                            'reg_no': row[0] if len(row) > 0 else '',
+                            'name': row[1] if len(row) > 1 else ''
+                        }
+            
+            return None
+            
+        except Exception as e:
+            print(f"Error validating student reg_no: {e}")
+            return None
+    
+    def get_all_students_with_marks(self, sheet_name: str = 'Sheet1') -> List[Dict]:
+        """
+        Get all students with their experiment marks from Google Sheets.
+        This is the ONLY source of truth for student data.
+        
+        Expected columns: Reg_No, Name, Exp_1 (Marks), ..., Exp_10 (Marks)
+        
+        Returns:
+            List of student dictionaries with marks
+        """
+        try:
+            result = self.sheets.values().get(
+                spreadsheetId=self.student_sheet_id,
+                range=f'{sheet_name}!A:L'
+            ).execute()
+            
+            values = result.get('values', [])
+            if not values or len(values) < 1:
+                return []
+            
+            students = []
+            
+            for row in values[1:]:  # Skip header
+                if row and len(row) > 0 and row[0]:  # Must have Reg_No
+                    student = {
+                        'reg_no': row[0] if len(row) > 0 else '',
+                        'name': row[1] if len(row) > 1 else '',
+                        'experiments': {}
+                    }
+                    
+                    # Extract experiment marks (columns C to L = Exp 1 to 10)
+                    for exp_no in range(1, 11):
+                        col_index = 1 + exp_no  # C=2 (Exp1), D=3 (Exp2), ...
+                        if len(row) > col_index and row[col_index]:
+                            try:
+                                student['experiments'][exp_no] = int(row[col_index])
+                            except ValueError:
+                                student['experiments'][exp_no] = row[col_index]
+                        else:
+                            student['experiments'][exp_no] = None
+                    
+                    students.append(student)
+            
+            return students
+            
+        except Exception as e:
+            print(f"Error getting students with marks: {e}")
+            return []
+    
+    def update_student_experiment_mark(
+        self, 
+        reg_no: str, 
+        experiment_no: int, 
+        marks: int, 
+        sheet_name: str = 'Sheet1'
+    ) -> bool:
+        """
+        Update a specific experiment mark for a student by Reg_No.
+        Only updates the specific cell, does not modify other data.
+        
+        Args:
+            reg_no: Student registration number
+            experiment_no: Experiment number (1-10)
+            marks: Marks to update
+            sheet_name: Sheet name
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        if experiment_no < 1 or experiment_no > 10:
+            print(f"Invalid experiment number: {experiment_no}")
+            return False
+        
+        try:
+            # First, find the row for this Reg_No
+            result = self.sheets.values().get(
+                spreadsheetId=self.student_sheet_id,
+                range=f'{sheet_name}!A:A'
+            ).execute()
+            
+            values = result.get('values', [])
+            if not values:
+                print("No data in sheet")
+                return False
+            
+            # Find row by Reg_No (case-insensitive)
+            reg_no_upper = reg_no.strip().upper()
+            target_row = None
+            
+            for idx, row in enumerate(values):
+                if row:
+                    sheet_reg_no = row[0].strip().upper() if row[0] else ''
+                    if sheet_reg_no == reg_no_upper:
+                        target_row = idx + 1  # 1-indexed for Sheets API
+                        break
+            
+            if target_row is None:
+                print(f"Student with Reg_No {reg_no} not found")
+                return False
+            
+            # Calculate column letter for experiment (C=Exp1, D=Exp2, ..., L=Exp10)
+            col_letter = chr(ord('C') + experiment_no - 1)  # C for Exp1, D for Exp2, etc.
+            
+            # Update only the specific cell
+            cell_range = f'{sheet_name}!{col_letter}{target_row}'
+            
+            self.sheets.values().update(
+                spreadsheetId=self.student_sheet_id,
+                range=cell_range,
+                valueInputOption='RAW',
+                body={'values': [[str(marks)]]}
+            ).execute()
+            
+            print(f"Updated {reg_no} Exp_{experiment_no} = {marks} at {cell_range}")
+            return True
+            
+        except Exception as e:
+            print(f"Error updating student experiment mark: {e}")
+            return False
+    
+    def get_student_by_reg_no(self, reg_no: str, sheet_name: str = 'Sheet1') -> Optional[Dict]:
+        """
+        Get a single student's data by Reg_No from Google Sheets.
+        
+        Args:
+            reg_no: Student registration number
+            sheet_name: Sheet name
+            
+        Returns:
+            Student dict with marks if found, None otherwise
+        """
+        try:
+            result = self.sheets.values().get(
+                spreadsheetId=self.student_sheet_id,
+                range=f'{sheet_name}!A:L'
+            ).execute()
+            
+            values = result.get('values', [])
+            if not values or len(values) < 2:
+                return None
+            
+            reg_no_upper = reg_no.strip().upper()
+            
+            for row in values[1:]:  # Skip header
+                if row:
+                    sheet_reg_no = (row[0] if len(row) > 0 else '').strip().upper()
+                    if sheet_reg_no == reg_no_upper:
+                        student = {
+                            'reg_no': row[0] if len(row) > 0 else '',
+                            'name': row[1] if len(row) > 1 else '',
+                            'experiments': {}
+                        }
+                        
+                        for exp_no in range(1, 11):
+                            col_index = 1 + exp_no
+                            if len(row) > col_index and row[col_index]:
+                                try:
+                                    student['experiments'][exp_no] = int(row[col_index])
+                                except ValueError:
+                                    student['experiments'][exp_no] = row[col_index]
+                            else:
+                                student['experiments'][exp_no] = None
+                        
+                        return student
+            
+            return None
+            
+        except Exception as e:
+            print(f"Error getting student by reg_no: {e}")
+            return None
+
+
 # Singleton instance
 _sheets_service = None
 

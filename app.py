@@ -1,12 +1,16 @@
 from dotenv import load_dotenv
 load_dotenv()  # Load .env file before anything else
 
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template, redirect, url_for, request, jsonify
 from flask_login import current_user
 from flask_wtf.csrf import generate_csrf
 from config import config
 from extensions import db, login_manager, csrf
+from datetime import timedelta
 import os
+
+# IST offset (UTC+05:30)
+IST_OFFSET = timedelta(hours=5, minutes=30)
 
 
 def create_app(config_name='development'):
@@ -25,6 +29,13 @@ def create_app(config_name='development'):
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Please log in to access this page.'
     login_manager.login_message_category = 'info'
+    
+    # Custom unauthorized handler - returns JSON for API routes
+    @login_manager.unauthorized_handler
+    def unauthorized():
+        if request.path.startswith('/api/'):
+            return jsonify({'error': 'Unauthorized - Please log in', 'login_required': True}), 401
+        return redirect(url_for('auth.login'))
     
     # User loader - must be outside app_context
     @login_manager.user_loader
@@ -49,18 +60,24 @@ def create_app(config_name='development'):
     with app.app_context():
         db.create_all()
     
-    # Register error handlers
+    # Register error handlers - return JSON for API routes
     @app.errorhandler(404)
     def not_found(error):
+        if request.path.startswith('/api/'):
+            return jsonify({'error': 'Resource not found'}), 404
         return render_template('errors/404.html'), 404
     
     @app.errorhandler(403)
     def forbidden(error):
+        if request.path.startswith('/api/'):
+            return jsonify({'error': 'Forbidden'}), 403
         return render_template('errors/403.html'), 403
     
     @app.errorhandler(500)
     def internal_error(error):
         db.session.rollback()
+        if request.path.startswith('/api/'):
+            return jsonify({'error': 'Internal server error'}), 500
         return render_template('errors/500.html'), 500
     
     # Home route
@@ -77,6 +94,14 @@ def create_app(config_name='development'):
     @app.context_processor
     def inject_csrf_token():
         return dict(csrf_token=generate_csrf)
+
+    # Add custom Jinja2 filter for UTC to IST conversion
+    @app.template_filter('to_ist')
+    def to_ist_filter(dt):
+        """Convert UTC datetime to IST"""
+        if dt is None:
+            return None
+        return dt + IST_OFFSET
 
     return app
 

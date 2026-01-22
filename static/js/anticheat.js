@@ -134,15 +134,21 @@
             },
             body: JSON.stringify({ reason: reason })
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showViolationAlert(reason);
-                // Redirect to marks page after showing alert
-                setTimeout(() => {
-                    window.location.href = `/student/viva/marks/${vivaSessionId}`;
-                }, 3000);
+        .then(response => {
+            // Check if response is JSON before parsing
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return response.json();
             }
+            // If not JSON, return a default object
+            return { success: true, fallback: true };
+        })
+        .then(data => {
+            showViolationAlert(reason);
+            // Redirect to marks page after showing alert
+            setTimeout(() => {
+                window.location.href = `/student/viva/marks/${vivaSessionId}`;
+            }, 3000);
         })
         .catch(error => {
             console.error('Error reporting violation:', error);
@@ -214,12 +220,26 @@
     }
     
     /**
-     * Detect window blur (losing focus)
+     * Detect window blur (losing focus) - with debounce to prevent false positives
      */
+    let blurTimeout = null;
     function bindWindowBlur() {
         window.addEventListener('blur', function() {
-            if (isVivaActive) {
-                reportViolation('Window focus lost - You switched to another window');
+            if (isVivaActive && !violationReported) {
+                // Add a small delay to prevent false positives from browser UI interactions
+                blurTimeout = setTimeout(() => {
+                    if (!document.hasFocus() && isVivaActive && !violationReported) {
+                        reportViolation('Window focus lost - You switched to another window');
+                    }
+                }, 500);
+            }
+        });
+        
+        window.addEventListener('focus', function() {
+            // Clear pending violation if user returns quickly
+            if (blurTimeout) {
+                clearTimeout(blurTimeout);
+                blurTimeout = null;
             }
         });
     }
@@ -397,15 +417,14 @@
     }
     
     /**
-     * Warn before page unload
+     * Warn before page unload - only show confirmation, don't report violation
+     * Violation will be handled by visibility change or session timeout
      */
     function bindBeforeUnload() {
         window.addEventListener('beforeunload', function(e) {
             if (isVivaActive && !violationReported) {
-                // Report violation for attempting to leave
-                reportViolation('Attempted to leave/refresh the viva page');
-                
-                // Show confirmation dialog
+                // Only show confirmation dialog - don't report violation here
+                // This prevents issues with page refresh during normal operation
                 e.preventDefault();
                 e.returnValue = 'Leaving this page will terminate your viva with 0 marks. Are you sure?';
                 return e.returnValue;

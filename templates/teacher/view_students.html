@@ -14,40 +14,37 @@
         <table class="students-table">
             <thead>
                 <tr>
-                    <th>Roll No</th>
+                    <th>Reg No</th>
                     <th>Name</th>
-                    {% for lab in labs %}
-                    <th colspan="{{ lab.experiments|length }}">{{ lab.lab_name }}</th>
-                    {% endfor %}
-                </tr>
-                <tr class="exp-header">
-                    <th></th>
-                    <th></th>
-                    {% for lab in labs %}
-                        {% for exp in lab.experiments %}
-                        <th>E{{ exp.experiment_no }}</th>
-                        {% endfor %}
-                    {% endfor %}
+                    <th>Exp 1</th>
+                    <th>Exp 2</th>
+                    <th>Exp 3</th>
+                    <th>Exp 4</th>
+                    <th>Exp 5</th>
+                    <th>Exp 6</th>
+                    <th>Exp 7</th>
+                    <th>Exp 8</th>
+                    <th>Exp 9</th>
+                    <th>Exp 10</th>
+                    <th>Total</th>
                 </tr>
             </thead>
             <tbody>
                 {% for student_info in students_data %}
                 <tr>
-                    <td><strong>{{ student_info.student.roll_number }}</strong></td>
-                    <td>{{ student_info.student.name }}</td>
-                    {% for lab in labs %}
-                        {% set lab_marks = student_info.marks_by_lab.get(lab.id, {}) %}
-                        {% for mark_info in lab_marks.get('marks', []) %}
-                        <td class="marks-cell {{ 'violated' if mark_info.status == 'violated' else '' }}">
-                            {% if mark_info.marks is not none %}
-                                {{ mark_info.marks }}
-                                {% if mark_info.status == 'violated' %}<span class="v-badge">V</span>{% endif %}
-                            {% else %}
-                                <span class="pending">-</span>
-                            {% endif %}
-                        </td>
-                        {% endfor %}
+                    <td><strong>{{ student_info.reg_no }}</strong></td>
+                    <td>{{ student_info.name }}</td>
+                    {% for exp_no in range(1, 11) %}
+                    <td class="marks-cell">
+                        {% set marks = student_info.experiments.get(exp_no) %}
+                        {% if marks is not none %}
+                            {{ marks }}
+                        {% else %}
+                            <span class="pending">-</span>
+                        {% endif %}
+                    </td>
                     {% endfor %}
+                    <td class="total-cell"><strong>{{ student_info.total_marks }}</strong></td>
                 </tr>
                 {% endfor %}
             </tbody>

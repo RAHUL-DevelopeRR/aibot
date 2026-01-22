@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, jsonify, request
 from flask_login import login_required, current_user
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from functools import wraps
 
 from extensions import db
@@ -9,6 +9,17 @@ from services.perplexity_service import generate_mcq_questions as perplexity_gen
 from services.sheets_service import get_sheets_service
 
 student_bp = Blueprint('student', __name__)
+
+# IST timezone offset (UTC+05:30)
+IST_OFFSET = timedelta(hours=5, minutes=30)
+
+def get_ist_now():
+    """Get current datetime in IST"""
+    return datetime.utcnow() + IST_OFFSET
+
+def get_ist_today():
+    """Get current date in IST"""
+    return get_ist_now().date()
 
 
 def student_required(f):
@@ -60,13 +71,14 @@ def dashboard():
                 }
                 
                 if schedule:
+                    today_ist = get_ist_today()
                     if session:
                         exp_info['status'] = session.status
                     elif schedule.is_active_now():
                         exp_info['status'] = 'available'
-                    elif schedule.scheduled_date > date.today():
+                    elif schedule.scheduled_date > today_ist:
                         exp_info['status'] = 'upcoming'
-                    elif schedule.scheduled_date < date.today():
+                    elif schedule.scheduled_date < today_ist:
                         exp_info['status'] = 'expired'
                     else:
                         exp_info['status'] = 'today_not_active'
@@ -100,12 +112,12 @@ def start_viva(experiment_id):
         flash('This experiment viva is not scheduled yet.', 'warning')
         return redirect(url_for('student.dashboard'))
     
-    # ENFORCE: Check if schedule is active NOW
+    # ENFORCE: Check if schedule is active NOW (using IST timezone)
     if not schedule.is_active_now():
-        today = date.today()
-        if schedule.scheduled_date > today:
+        today_ist = get_ist_today()
+        if schedule.scheduled_date > today_ist:
             flash(f'This viva is scheduled for {schedule.scheduled_date}. You cannot attempt it early.', 'warning')
-        elif schedule.scheduled_date < today:
+        elif schedule.scheduled_date < today_ist:
             flash('This viva schedule has expired.', 'danger')
         else:
             flash(f'This viva is only available between {schedule.start_time} and {schedule.end_time} today.', 'warning')
@@ -125,30 +137,35 @@ def start_viva(experiment_id):
             return redirect(url_for('student.attempt_viva', viva_session_id=existing_session.id))
     
     # Create new session
-    viva_session = VivaSession(
-        student_id=current_user.id,
-        schedule_id=schedule.id,
-        experiment_id=experiment_id,
-        status='in_progress',
-        total_marks=10,
-        started_at=datetime.utcnow()
-    )
-    
-    # Generate MCQ questions using Perplexity AI
-    questions = perplexity_generate_mcqs(
-        experiment_title=experiment.title,
-        experiment_description=experiment.description or '',
-        lab_name=experiment.lab_config.lab_name,
-        student_id=current_user.id,
-        num_questions=10
-    )
-    viva_session.generated_questions = questions
-    
-    schedule.enrolled_count += 1
-    db.session.add(viva_session)
-    db.session.commit()
-    
-    return redirect(url_for('student.attempt_viva', viva_session_id=viva_session.id))
+    try:
+        viva_session = VivaSession(
+            student_id=current_user.id,
+            schedule_id=schedule.id,
+            experiment_id=experiment_id,
+            status='in_progress',
+            total_marks=10,
+            started_at=datetime.utcnow()
+        )
+        
+        # Generate MCQ questions using Perplexity AI
+        questions = perplexity_generate_mcqs(
+            experiment_title=experiment.title,
+            experiment_description=experiment.description or '',
+            lab_name=experiment.lab_config.lab_name,
+            student_id=current_user.id,
+            num_questions=10
+        )
+        viva_session.generated_questions = questions
+        
+        schedule.enrolled_count += 1
+        db.session.add(viva_session)
+        db.session.commit()
+        
+        return redirect(url_for('student.attempt_viva', viva_session_id=viva_session.id))
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error starting viva: {str(e)}. Please try again.', 'danger')
+        return redirect(url_for('student.dashboard'))
 
 
 @student_bp.route('/viva/attempt/<int:viva_session_id>')

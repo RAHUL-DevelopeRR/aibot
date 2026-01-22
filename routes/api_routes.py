@@ -127,22 +127,22 @@ def submit_viva(viva_session_id):
         
         db.session.commit()
         
-        # Sync to Google Sheets if configured
+        # Write marks to Google Sheets (Single Source of Truth)
+        # Uses Reg_No-based row mapping to update specific experiment column
         sheets = get_sheets_service()
-        if sheets and viva.experiment:
+        if sheets and viva.experiment and current_user.roll_number:
             try:
-                sheets.update_viva_marks(
-                    lab_name=viva.experiment.lab_config.lab_name,
+                success = sheets.update_student_experiment_mark(
+                    reg_no=current_user.roll_number,
                     experiment_no=viva.experiment.experiment_no,
-                    marks_data=[{
-                        'roll_number': current_user.roll_number,
-                        'name': current_user.name,
-                        'marks': viva.obtained_marks,
-                        'status': viva.status
-                    }]
+                    marks=viva.obtained_marks
                 )
+                if success:
+                    print(f"Marks updated in Google Sheets: {current_user.roll_number} Exp_{viva.experiment.experiment_no} = {viva.obtained_marks}")
+                else:
+                    print(f"Failed to update marks in Google Sheets for {current_user.roll_number}")
             except Exception as sheet_error:
-                print(f"Sheets sync error: {sheet_error}")
+                print(f"Google Sheets sync error: {sheet_error}")
         
         return jsonify({
             'success': True,
@@ -206,22 +206,17 @@ def report_violation(viva_session_id):
         viva.finalize_violation(reason)
         db.session.commit()
         
-        # Sync to Google Sheets if configured
+        # Write 0 marks to Google Sheets (Single Source of Truth)
         sheets = get_sheets_service()
-        if sheets and viva.experiment:
+        if sheets and viva.experiment and current_user.roll_number:
             try:
-                sheets.update_viva_marks(
-                    lab_name=viva.experiment.lab_config.lab_name,
+                sheets.update_student_experiment_mark(
+                    reg_no=current_user.roll_number,
                     experiment_no=viva.experiment.experiment_no,
-                    marks_data=[{
-                        'roll_number': current_user.roll_number,
-                        'name': current_user.name,
-                        'marks': 0,
-                        'status': 'violated'
-                    }]
+                    marks=0  # Violation = 0 marks
                 )
             except Exception as sheet_error:
-                print(f"Sheets sync error: {sheet_error}")
+                print(f"Google Sheets sync error: {sheet_error}")
         
         return jsonify({
             'success': True,

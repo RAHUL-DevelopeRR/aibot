@@ -1,7 +1,14 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from functools import wraps
+
+# IST timezone offset (UTC+05:30)
+IST_OFFSET = timedelta(hours=5, minutes=30)
+
+def get_ist_today():
+    """Get current date in IST"""
+    return (datetime.utcnow() + IST_OFFSET).date()
 
 from extensions import db
 from models.user import VivaSchedule, VivaSession, Subject, LabConfig, User, Experiment, TeacherSubject, StudentAnswer
@@ -45,7 +52,13 @@ def dashboard():
         .all()
     )
     
-    # Get all students
+    # Get all students from Google Sheets (Single Source of Truth)
+    sheets = get_sheets_service()
+    students_from_sheets = []
+    if sheets:
+        students_from_sheets = sheets.get_all_students_with_marks()
+    
+    # Fallback to local DB for registered students (for other purposes)
     students = User.query.filter_by(role='student').all()
     
     # Get teacher's subjects (if assigned)
@@ -81,10 +94,12 @@ def dashboard():
                 })
             labs_data.append(lab_info)
     
-    # Stats
+    # Stats (using IST timezone)
     total_schedules = len(schedules)
-    today_schedules = len([s for s in schedules if s.scheduled_date == date.today()])
-    total_students = len(students)
+    today_ist = get_ist_today()
+    today_schedules = len([s for s in schedules if s.scheduled_date == today_ist])
+    # Use Google Sheets count as Single Source of Truth
+    total_students = len(students_from_sheets) if students_from_sheets else len(students)
     
     return render_template('teacher/dashboard.html',
                          schedules=schedules,
@@ -272,47 +287,28 @@ def profile():
 @login_required
 @teacher_required
 def view_students():
-    """View all students and their viva marks"""
-    students = User.query.filter_by(role='student').order_by(User.roll_number).all()
+    """View all students and their viva marks - Data from Google Sheets"""
+    sheets = get_sheets_service()
     
-    # Get all labs
+    if not sheets:
+        flash('Google Sheets not configured. Cannot fetch student data.', 'danger')
+        return redirect(url_for('teacher.dashboard'))
+    
+    # Fetch students with marks directly from Google Sheets (Single Source of Truth)
+    students_from_sheets = sheets.get_all_students_with_marks()
+    
+    # Get labs for display context
     labs = LabConfig.query.all()
     
-    # Build student marks matrix
+    # Build student data for template
     students_data = []
-    for student in students:
+    for student in students_from_sheets:
         student_info = {
-            'student': student,
-            'marks_by_lab': {}
+            'reg_no': student['reg_no'],
+            'name': student['name'],
+            'experiments': student['experiments'],  # Dict: {1: marks, 2: marks, ...}
+            'total_marks': sum(m for m in student['experiments'].values() if m is not None)
         }
-        
-        for lab in labs:
-            lab_marks = []
-            for exp in lab.experiments:
-                session = VivaSession.query.filter_by(
-                    student_id=student.id,
-                    experiment_id=exp.id
-                ).first()
-                
-                if session and session.status in ['completed', 'violated']:
-                    lab_marks.append({
-                        'exp_no': exp.experiment_no,
-                        'marks': session.obtained_marks or 0,
-                        'status': session.status
-                    })
-                else:
-                    lab_marks.append({
-                        'exp_no': exp.experiment_no,
-                        'marks': None,
-                        'status': 'pending'
-                    })
-            
-            student_info['marks_by_lab'][lab.id] = {
-                'lab_name': lab.lab_name,
-                'marks': lab_marks,
-                'total': sum(m['marks'] or 0 for m in lab_marks)
-            }
-        
         students_data.append(student_info)
     
     return render_template('teacher/view_students.html',

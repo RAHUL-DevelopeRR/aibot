@@ -63,7 +63,7 @@
                     <tr>
                         <td>{{ session.student.roll_number }}</td>
                         <td>{{ session.student.name }}</td>
-                        <td>{{ session.started_at.strftime('%H:%M:%S') if session.started_at else '-' }}</td>
+                        <td>{{ (session.started_at|to_ist).strftime('%H:%M:%S') if session.started_at else '-' }}</td>
                         <td>
                             <span class="status-badge {{ session.status }}">
                                 {% if session.status == 'violated' %}

@@ -3,6 +3,7 @@ from flask_login import login_user, logout_user, current_user
 from extensions import db
 from models.user import User
 from werkzeug.security import generate_password_hash
+from services.sheets_service import get_sheets_service
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -73,11 +74,26 @@ def register():
             flash('Email already registered.', 'danger')
             return redirect(url_for('auth.register'))
         
+        # For students: Validate Reg_No exists in Google Sheets
+        if role == 'student':
+            sheets = get_sheets_service()
+            if sheets:
+                student_data = sheets.validate_student_reg_no(roll_number)
+                if not student_data:
+                    flash('Registration Number not found in student records. Please contact your teacher.', 'danger')
+                    return redirect(url_for('auth.register'))
+                # Use name from Google Sheets if available
+                if student_data.get('name'):
+                    name = student_data['name']
+            else:
+                flash('Unable to verify registration number. Please try again later.', 'warning')
+                return redirect(url_for('auth.register'))
+        
         # Create user
         user = User(
             name=name,
             email=email,
-            roll_number=roll_number,
+            roll_number=roll_number.strip().upper(),  # Normalize Reg_No
             role=role
         )
         user.set_password(password)

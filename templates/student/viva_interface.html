@@ -567,6 +567,21 @@
                     answer_text: selectedOption
                 })
             });
+            
+            // Check if response is JSON before parsing
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                // Session expired or server error - redirect to login
+                if (response.status === 401) {
+                    alert('Session expired. Please log in again.');
+                    window.location.href = '/login';
+                    return;
+                }
+                console.error('Server returned non-JSON response');
+                alert('Server error. Please try again.');
+                return;
+            }
+            
             const data = await response.json();
 
             if (response.ok && data.success) {
@@ -598,11 +613,15 @@
                 if (questionNum < questions.length) {
                     setTimeout(() => showQuestion(questionNum + 1), 500);
                 }
+            } else if (data.login_required) {
+                alert('Session expired. Please log in again.');
+                window.location.href = '/login';
             } else {
                 alert(data.error || 'Error saving answer');
             }
         } catch (error) {
-            alert('Error saving answer: ' + error);
+            console.error('Error saving answer:', error);
+            alert('Error saving answer. Please check your connection.');
         }
     }
 

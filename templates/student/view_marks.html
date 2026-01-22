@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block title %}Viva Results - Lab Viva Assistant{% endblock %}
+
+{% block content %}
+<div class="results-container">
+    <div class="results-header">
+        <h1><i class="fas fa-chart-bar"></i> Viva Results</h1>
+        <p class="subtitle">{{ viva.experiment.title }} - {{ viva.experiment.lab_config.lab_name }}</p>
+    </div>
+
+    <div class="score-card {% if viva.status == 'violated' %}violated{% elif viva.obtained_marks >= 7 %}excellent{% elif viva.obtained_marks >= 5 %}good{% else %}needs-improvement{% endif %}">
+        <div class="score-main">
+            <div class="score-circle">
+                <span class="score-value">{{ viva.obtained_marks }}</span>
+                <span class="score-total">/{{ viva.total_marks }}</span>
+            </div>
+            <div class="score-label">
+                {% if viva.status == 'violated' %}
+                    <span class="status-badge violated"><i class="fas fa-exclamation-triangle"></i> Violated</span>
+                    <p class="violation-reason">{{ viva.violation_reason or 'Anti-cheat violation detected' }}</p>
+                {% elif viva.obtained_marks >= 7 %}
+                    <span class="status-badge excellent"><i class="fas fa-star"></i> Excellent!</span>
+                {% elif viva.obtained_marks >= 5 %}
+                    <span class="status-badge good"><i class="fas fa-thumbs-up"></i> Good Job!</span>
+                {% else %}
+                    <span class="status-badge needs-improvement"><i class="fas fa-book"></i> Keep Practicing</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="score-details">
+            <div class="detail-item">
+                <span class="detail-label">Status</span>
+                <span class="detail-value">{{ viva.status|capitalize }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Questions</span>
+                <span class="detail-value">{{ viva.generated_questions|length if viva.generated_questions else 10 }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Completed</span>
+                <span class="detail-value">{{ viva.completed_at.strftime('%Y-%m-%d %H:%M') if viva.completed_at else 'N/A' }}</span>
+            </div>
+        </div>
+    </div>
+
+    {% if answers %}
+    <div class="answers-section">
+        <h2><i class="fas fa-list-check"></i> Your Answers</h2>
+        <div class="answers-list">
+            {% for answer in answers %}
+            <div class="answer-card {% if answer.marks_obtained and answer.marks_obtained > 0 %}correct{% else %}incorrect{% endif %}">
+                <div class="answer-header">
+                    <span class="q-number">Q{{ answer.question_number }}</span>
+                    <span class="answer-marks">
+                        {% if answer.marks_obtained is not none %}
+                            {{ answer.marks_obtained }}/1
+                        {% else %}
+                            -/1
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="answer-body">
+                    <p class="your-answer">
+                        <strong>Your Answer:</strong> {{ answer.answer_text or 'Not answered' }}
+                    </p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="actions">
+        <a href="{{ url_for('student.dashboard') }}" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<style>
+.results-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 30px 20px;
+}
+
+.results-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.results-header h1 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.subtitle {
+    color: #666;
+    margin: 0;
+}
+
+.score-card {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    border-left: 5px solid #667eea;
+}
+
+.score-card.violated {
+    border-left-color: #dc3545;
+    background: linear-gradient(135deg, #fff 0%, #ffe6e6 100%);
+}
+
+.score-card.excellent {
+    border-left-color: #28a745;
+    background: linear-gradient(135deg, #fff 0%, #e6ffe6 100%);
+}
+
+.score-card.good {
+    border-left-color: #667eea;
+    background: linear-gradient(135deg, #fff 0%, #e6e6ff 100%);
+}
+
+.score-card.needs-improvement {
+    border-left-color: #ffc107;
+    background: linear-gradient(135deg, #fff 0%, #fffde6 100%);
+}
+
+.score-main {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    margin-bottom: 20px;
+}
+
+.score-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+}
+
+.score-card.violated .score-circle {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+.score-card.excellent .score-circle {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+}
+
+.score-value {
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.score-total {
+    font-size: 18px;
+    opacity: 0.9;
+}
+
+.score-label {
+    flex: 1;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.status-badge.violated {
+    background: #dc3545;
+    color: white;
+}
+
+.status-badge.excellent {
+    background: #28a745;
+    color: white;
+}
+
+.status-badge.good {
+    background: #667eea;
+    color: white;
+}
+
+.status-badge.needs-improvement {
+    background: #ffc107;
+    color: #212529;
+}
+
+.violation-reason {
+    margin-top: 10px;
+    color: #dc3545;
+    font-size: 14px;
+}
+
+.score-details {
+    display: flex;
+    gap: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.detail-item {
+    text-align: center;
+}
+
+.detail-label {
+    display: block;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.detail-value {
+    font-weight: 600;
+    color: #333;
+}
+
+.answers-section {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.answers-section h2 {
+    margin: 0 0 20px 0;
+    color: #333;
+    font-size: 20px;
+}
+
+.answers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.answer-card {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 15px;
+    border-left: 4px solid #dc3545;
+}
+
+.answer-card.correct {
+    border-left-color: #28a745;
+    background: #f0fff0;
+}
+
+.answer-card.incorrect {
+    border-left-color: #dc3545;
+    background: #fff5f5;
+}
+
+.answer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.q-number {
+    font-weight: 700;
+    color: #333;
+}
+
+.answer-marks {
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 14px;
+}
+
+.answer-card.correct .answer-marks {
+    background: #28a745;
+    color: white;
+}
+
+.answer-card.incorrect .answer-marks {
+    background: #dc3545;
+    color: white;
+}
+
+.your-answer {
+    margin: 0;
+    color: #555;
+    font-size: 14px;
+}
+
+.actions {
+    text-align: center;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+@media (max-width: 600px) {
+    .score-main {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .score-details {
+        flex-direction: column;
+        gap: 15px;
+    }
+}
+</style>
+{% endblock %}

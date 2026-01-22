@@ -143,10 +143,16 @@ class VivaSchedule(db.Model):
     
     def is_active_now(self):
         """Check if schedule is currently active (within time window)"""
-        from datetime import date, time
-        now = datetime.utcnow()
-        today = now.date()
-        current_time = now.time()
+        from datetime import date, time, timedelta
+        
+        # Use IST (UTC+05:30) as the server operates in Indian timezone
+        # Schedule times are stored in local IST format
+        IST_OFFSET = timedelta(hours=5, minutes=30)
+        now_utc = datetime.utcnow()
+        now_ist = now_utc + IST_OFFSET
+        
+        today = now_ist.date()
+        current_time = now_ist.time()
         
         if self.scheduled_date != today:
             return False
