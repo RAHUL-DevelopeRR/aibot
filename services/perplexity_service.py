@@ -141,6 +141,7 @@ def generate_practice_questions(topic, count=5):
 def generate_mcq_questions(experiment_title, experiment_description, lab_name, student_id, num_questions=10):
     """
     Generate random MCQ questions for viva using Perplexity API.
+    Each call generates UNIQUE questions per student per attempt.
     
     Args:
         experiment_title: Title of the experiment
@@ -159,21 +160,32 @@ def generate_mcq_questions(experiment_title, experiment_description, lab_name, s
         }
     """
     import random
+    import time
     
-    prompt = f"""Generate exactly {num_questions} unique multiple choice questions (MCQs) for a lab viva assessment.
+    # Generate unique seed using timestamp + student_id for true randomness
+    unique_seed = int(time.time() * 1000) + (student_id * 17) + random.randint(1, 10000)
+    
+    # Check if API key is configured
+    if not PERPLEXITY_API_KEY:
+        logger.error("PERPLEXITY_API_KEY not set - using fallback questions")
+        return _generate_fallback_mcqs(experiment_title, num_questions)
+    
+    prompt = f"""Generate exactly {num_questions} UNIQUE and DIFFERENT multiple choice questions (MCQs) for a lab viva assessment.
 
 Lab: {lab_name}
 Experiment: {experiment_title}
 Description: {experiment_description or 'General concepts related to the experiment'}
 
-Requirements:
-1. Generate exactly {num_questions} MCQ questions
-2. Each question should test understanding of the experiment concepts
-3. Each question should have exactly 4 options (A, B, C, D)
-4. Only ONE option should be correct
-5. Questions should be of moderate difficulty (1 mark each)
-6. Mix conceptual, procedural, and application-based questions
-7. Make questions unique using seed {student_id}
+CRITICAL REQUIREMENTS:
+1. Generate exactly {num_questions} MCQ questions - each must be DIFFERENT
+2. Questions must test deep understanding of the experiment
+3. Each question must have exactly 4 options (A, B, C, D)
+4. Only ONE option should be correct for each question
+5. Difficulty: moderate to challenging (1 mark each)
+6. Mix: 40% conceptual, 30% procedural, 30% application-based
+7. RANDOMIZATION SEED: {unique_seed} - use this to ensure unique questions
+8. Do NOT repeat questions from previous generations
+9. Include questions about: algorithms, data structures, time complexity, implementation details
 
 Return ONLY a valid JSON array with this exact structure (no markdown, no explanation, no extra text):
 [
@@ -199,19 +211,23 @@ Return ONLY a valid JSON array with this exact structure (no markdown, no explan
         payload = {
             "model": "sonar",
             "messages": [
-                {"role": "system", "content": "You are an expert lab viva examiner. Generate MCQ questions in valid JSON format only. No markdown, no explanation."},
+                {"role": "system", "content": "You are an expert lab viva examiner. Generate unique MCQ questions in valid JSON format only. No markdown, no explanation. Each generation must produce completely different questions."},
                 {"role": "user", "content": prompt}
             ],
             "max_tokens": 4096,
-            "temperature": 0.8
+            "temperature": 1.0  # Higher temperature for more randomness
         }
 
+        logger.info(f"Calling Perplexity API for MCQ generation - student_id={student_id}, experiment={experiment_title}")
+        
         response = requests.post(
             PERPLEXITY_API_URL,
             headers=headers,
             json=payload,
             timeout=60
         )
+        
+        logger.info(f"Perplexity API response status: {response.status_code}")
 
         if response.status_code == 200:
             data = response.json()
@@ -229,37 +245,98 @@ Return ONLY a valid JSON array with this exact structure (no markdown, no explan
             questions = json.loads(response_text)
             
             # Validate and fix structure
-            if isinstance(questions, list):
+            if isinstance(questions, list) and len(questions) > 0:
+                validated_questions = []
                 for i, q in enumerate(questions):
-                    q['question_number'] = i + 1
-                    if 'correct_answer' not in q or q['correct_answer'] not in ['A', 'B', 'C', 'D']:
-                        q['correct_answer'] = 'A'
-                return questions[:num_questions]
+                    if isinstance(q, dict) and 'question' in q and 'options' in q:
+                        q['question_number'] = i + 1
+                        if 'correct_answer' not in q or q['correct_answer'] not in ['A', 'B', 'C', 'D']:
+                            q['correct_answer'] = 'A'
+                        validated_questions.append(q)
+                
+                if len(validated_questions) >= num_questions:
+                    logger.info(f"Successfully generated {len(validated_questions)} MCQ questions via Perplexity")
+                    return validated_questions[:num_questions]
+                else:
+                    logger.warning(f"Only got {len(validated_questions)} valid questions, need {num_questions}")
         
-        # Fallback if API fails
+        # API returned but parsing failed
+        logger.error(f"Failed to parse Perplexity response: {response_text[:500]}")
         return _generate_fallback_mcqs(experiment_title, num_questions)
         
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON parse error in MCQ generation: {e}")
+        return _generate_fallback_mcqs(experiment_title, num_questions)
+    except requests.exceptions.Timeout:
+        logger.error("Perplexity API timeout during MCQ generation")
+        return _generate_fallback_mcqs(experiment_title, num_questions)
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Perplexity API request error: {e}")
+        return _generate_fallback_mcqs(experiment_title, num_questions)
     except Exception as e:
-        logger.error(f"Perplexity MCQ generation error: {e}")
+        logger.error(f"Unexpected error in MCQ generation: {e}")
         return _generate_fallback_mcqs(experiment_title, num_questions)
 
 
 def _generate_fallback_mcqs(experiment_title, num_questions):
-    """Generate simple fallback MCQs if API fails"""
+    """Generate contextual fallback MCQs if API fails - uses experiment-specific templates"""
     import random
+    
+    # Experiment-specific question templates for common lab experiments
+    experiment_templates = {
+        'water jug': [
+            {'q': 'What is the state space representation in the Water Jug Problem?', 'a': 'A', 'opts': {'A': 'A tuple (x, y) representing water in each jug', 'B': 'Total water in system', 'C': 'Number of operations performed', 'D': 'Capacity of jugs'}},
+            {'q': 'Which algorithm is commonly used to solve the Water Jug Problem?', 'a': 'B', 'opts': {'A': 'Dynamic Programming', 'B': 'BFS/DFS', 'C': 'Greedy Algorithm', 'D': 'Divide and Conquer'}},
+            {'q': 'What is the goal state in Water Jug Problem?', 'a': 'C', 'opts': {'A': 'Both jugs empty', 'B': 'Both jugs full', 'C': 'Desired amount in one jug', 'D': 'Equal water in both jugs'}},
+            {'q': 'How many operations are possible in Water Jug Problem?', 'a': 'D', 'opts': {'A': '2', 'B': '3', 'C': '4', 'D': '6 (fill, empty, pour for each jug)'}},
+            {'q': 'What type of search is Water Jug Problem?', 'a': 'A', 'opts': {'A': 'State space search', 'B': 'Linear search', 'C': 'Binary search', 'D': 'Interpolation search'}},
+        ],
+        'default': [
+            {'q': f'What is the primary objective of {experiment_title}?', 'a': 'A', 'opts': {'A': 'To understand and implement the core algorithm', 'B': 'To memorize the code', 'C': 'To copy from textbook', 'D': 'None of the above'}},
+            {'q': f'What is the time complexity typically analyzed in {experiment_title}?', 'a': 'B', 'opts': {'A': 'Space complexity only', 'B': 'Worst, average, and best case', 'C': 'Only best case', 'D': 'Not applicable'}},
+            {'q': 'What is an algorithm?', 'a': 'A', 'opts': {'A': 'Step-by-step procedure to solve a problem', 'B': 'A programming language', 'C': 'A type of data structure', 'D': 'A hardware component'}},
+            {'q': 'What does Big-O notation represent?', 'a': 'C', 'opts': {'A': 'Best case complexity', 'B': 'Average case complexity', 'C': 'Upper bound of complexity', 'D': 'Lower bound of complexity'}},
+            {'q': 'Which data structure uses LIFO principle?', 'a': 'B', 'opts': {'A': 'Queue', 'B': 'Stack', 'C': 'Array', 'D': 'Linked List'}},
+        ]
+    }
+    
+    # Find matching template based on experiment title
+    template_key = 'default'
+    title_lower = experiment_title.lower()
+    for key in experiment_templates.keys():
+        if key in title_lower:
+            template_key = key
+            break
+    
+    templates = experiment_templates[template_key]
     questions = []
+    
+    # Use templates and generate additional if needed
+    random.shuffle(templates)
     for i in range(num_questions):
-        questions.append({
-            'question_number': i + 1,
-            'question': f'Question {i+1} about {experiment_title}?',
-            'options': {
-                'A': 'Option A',
-                'B': 'Option B',
-                'C': 'Option C',
-                'D': 'Option D'
-            },
-            'correct_answer': random.choice(['A', 'B', 'C', 'D'])
-        })
+        if i < len(templates):
+            t = templates[i]
+            questions.append({
+                'question_number': i + 1,
+                'question': t['q'],
+                'options': t['opts'],
+                'correct_answer': t['a']
+            })
+        else:
+            # Generate generic questions for remaining slots
+            questions.append({
+                'question_number': i + 1,
+                'question': f'Conceptual question {i+1} about {experiment_title}: What is a key consideration?',
+                'options': {
+                    'A': 'Algorithm correctness',
+                    'B': 'Time efficiency',
+                    'C': 'Space efficiency',
+                    'D': 'All of the above'
+                },
+                'correct_answer': 'D'
+            })
+    
+    logger.warning(f"Using fallback MCQs for {experiment_title} - Perplexity API unavailable")
     return questions
 
 

@@ -571,14 +571,13 @@
             // Check if response is JSON before parsing
             const contentType = response.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
-                // Session expired or server error - redirect to login
                 if (response.status === 401) {
-                    alert('Session expired. Please log in again.');
-                    window.location.href = '/login';
+                    showToast('Session expired. Redirecting...', 'error');
+                    setTimeout(() => { window.location.href = '/login'; }, 2000);
                     return;
                 }
                 console.error('Server returned non-JSON response');
-                alert('Server error. Please try again.');
+                showToast('Server error. Please try again.', 'error');
                 return;
             }
             
@@ -614,14 +613,17 @@
                     setTimeout(() => showQuestion(questionNum + 1), 500);
                 }
             } else if (data.login_required) {
-                alert('Session expired. Please log in again.');
-                window.location.href = '/login';
+                showToast('Session expired. Redirecting...', 'error');
+                setTimeout(() => { window.location.href = '/login'; }, 2000);
+            } else if (data.csrf_error) {
+                showToast('Security token expired. Refreshing...', 'warning');
+                setTimeout(() => { window.location.reload(); }, 2000);
             } else {
-                alert(data.error || 'Error saving answer');
+                showToast(data.error || 'Error saving answer', 'error');
             }
         } catch (error) {
             console.error('Error saving answer:', error);
-            alert('Error saving answer. Please check your connection.');
+            showToast('Error saving answer. Please try again.', 'error');
         }
     }
 
@@ -664,20 +666,44 @@
                     'X-CSRFToken': getCookie('csrf_token')
                 }
             });
+            
+            // Check if response is JSON before parsing
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                if (response.status === 401) {
+                    showToast('Session expired. Redirecting...', 'error');
+                    setTimeout(() => { window.location.href = '/login'; }, 2000);
+                    return;
+                }
+                console.error('Server returned non-JSON response:', response.status);
+                showToast('Server error. Please try again.', 'error');
+                return;
+            }
+            
             const data = await response.json();
 
             if (response.ok && data.success) {
-                alert(`Viva submitted successfully! You scored ${data.obtained_marks}/${data.total_marks} marks.`);
-                window.location.href = `/student/viva/marks/${vivaId}`;
+                showToast(`Viva submitted! You scored ${data.obtained_marks}/${data.total_marks} marks.`, 'success', 2000);
+                setTimeout(() => { window.location.href = `/student/viva/marks/${vivaId}`; }, 2000);
+            } else if (data.login_required) {
+                showToast('Session expired. Redirecting to login...', 'error');
+                setTimeout(() => { window.location.href = '/login'; }, 2000);
             } else {
-                alert(data.error || 'Error submitting viva');
+                showToast(data.error || 'Error submitting viva', 'error');
             }
         } catch (error) {
-            alert('Error submitting viva: ' + error);
+            console.error('Error submitting viva:', error);
+            showToast('Error submitting viva. Please try again.', 'error');
         }
     }
 
     function getCookie(name) {
+        // First try to get from meta tag (for csrf_token)
+        if (name === 'csrf_token') {
+            const meta = document.querySelector('meta[name="csrf-token"]');
+            if (meta) return meta.getAttribute('content');
+        }
+        // Fallback to cookie
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
             const cookies = document.cookie.split(';');
@@ -692,16 +718,50 @@
         return cookieValue;
     }
 
+    // Toast notification function (non-intrusive, doesn't exit fullscreen)
+    function showToast(message, type = 'info', duration = 3000) {
+        const toast = document.createElement('div');
+        toast.className = `toast-notification toast-${type}`;
+        toast.innerHTML = `<span>${message}</span>`;
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 999999;
+            animation: slideIn 0.3s ease;
+            max-width: 400px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        `;
+        if (type === 'success') toast.style.background = 'linear-gradient(135deg, #28a745, #20c997)';
+        else if (type === 'error') toast.style.background = 'linear-gradient(135deg, #dc3545, #c82333)';
+        else if (type === 'warning') toast.style.background = 'linear-gradient(135deg, #ffc107, #e0a800)';
+        else toast.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+        
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, duration);
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
+        // HIDE CHATBOT WIDGET during viva session - no external help allowed
+        const chatbotBtn = document.getElementById('chatbot-floating-btn');
+        const chatbotWindow = document.getElementById('chatbot-window');
+        if (chatbotBtn) chatbotBtn.style.display = 'none';
+        if (chatbotWindow) chatbotWindow.style.display = 'none';
+        
         // Show fullscreen modal first
-        // Don't initialize anti-cheat until user enters fullscreen
         console.log('Viva interface loaded, waiting for fullscreen entry...');
     });
 
     // Function to enter fullscreen and start viva
     function enterFullscreenMode() {
         const elem = document.documentElement;
-
         const enterFS = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.msRequestFullscreen;
 
         if (enterFS) {

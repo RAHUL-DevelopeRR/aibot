@@ -6,6 +6,7 @@ from flask_login import current_user
 from flask_wtf.csrf import generate_csrf
 from config import config
 from extensions import db, login_manager, csrf
+from flask_wtf.csrf import CSRFError
 from datetime import timedelta
 import os
 
@@ -79,6 +80,12 @@ def create_app(config_name='development'):
         if request.path.startswith('/api/'):
             return jsonify({'error': 'Internal server error'}), 500
         return render_template('errors/500.html'), 500
+    
+    @app.errorhandler(CSRFError)
+    def handle_csrf_error(error):
+        if request.path.startswith('/api/'):
+            return jsonify({'error': 'CSRF token missing or invalid', 'csrf_error': True}), 400
+        return render_template('errors/403.html'), 403
     
     # Home route
     @app.route('/')

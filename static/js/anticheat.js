@@ -448,9 +448,15 @@
     }
     
     /**
-     * Get cookie value by name
+     * Get cookie value by name (or from meta tag for csrf_token)
      */
     function getCookie(name) {
+        // First try to get from meta tag (for csrf_token)
+        if (name === 'csrf_token') {
+            const meta = document.querySelector('meta[name="csrf-token"]');
+            if (meta) return meta.getAttribute('content');
+        }
+        // Fallback to cookie
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
             const cookies = document.cookie.split(';');
