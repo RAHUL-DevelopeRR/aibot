@@ -4,7 +4,7 @@ from datetime import datetime
 
 from extensions import db
 from models.user import StudentAnswer, VivaSession, LabConfig, Experiment
-from services.gemini_service import get_gemini_service
+from services.perplexity_service import evaluate_mcq_answers
 from services.sheets_service import get_sheets_service
 
 api_bp = Blueprint('api', __name__)
@@ -106,12 +106,11 @@ def submit_viva(viva_session_id):
         answers = StudentAnswer.query.filter_by(viva_session_id=viva_session_id).all()
         student_answers = {a.question_number: a.answer_text for a in answers}
         
-        # Evaluate answers against generated questions
+        # Evaluate answers against generated questions using Perplexity
         questions = viva.generated_questions or []
-        gemini = get_gemini_service()
         
-        if gemini and questions:
-            result = gemini.evaluate_answers(questions, student_answers)
+        if questions:
+            result = evaluate_mcq_answers(questions, student_answers)
             viva.obtained_marks = result['obtained_marks']
             
             # Update individual answer marks

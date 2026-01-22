@@ -61,6 +61,11 @@
                 <h3>Sync from Sheets</h3>
                 <p>Fetch experiments from Google Sheets</p>
             </a>
+            <a href="{{ url_for('teacher.clean_and_sync') }}" class="action-card clean-card" onclick="return confirm('This will DELETE all existing experiments and sync fresh from Google Sheets. Continue?')">
+                <i class="fas fa-broom"></i>
+                <h3>Clean & Sync</h3>
+                <p>Remove old data, fetch fresh from Sheets</p>
+            </a>
         </div>
     </section>
 
@@ -248,6 +253,14 @@
     margin: 0;
     font-size: 14px;
     opacity: 0.9;
+}
+
+.action-card.sync-card {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.action-card.clean-card {
+    background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
 }
 
 .schedules-grid {

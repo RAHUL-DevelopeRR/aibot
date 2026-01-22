@@ -5,7 +5,7 @@ from functools import wraps
 
 from extensions import db
 from models.user import VivaSession, VivaSchedule, StudentAnswer, LabConfig, Experiment, Subject
-from services.gemini_service import get_gemini_service
+from services.perplexity_service import generate_mcq_questions as perplexity_generate_mcqs
 from services.sheets_service import get_sheets_service
 
 student_bp = Blueprint('student', __name__)
@@ -134,21 +134,15 @@ def start_viva(experiment_id):
         started_at=datetime.utcnow()
     )
     
-    # Generate MCQ questions using Gemini
-    gemini = get_gemini_service()
-    if gemini:
-        questions = gemini.generate_mcq_questions(
-            experiment_title=experiment.title,
-            experiment_description=experiment.description or '',
-            materials_text=experiment.materials_text or experiment.lab_config.materials_text or '',
-            lab_name=experiment.lab_config.lab_name,
-            student_id=current_user.id,
-            num_questions=10
-        )
-        viva_session.generated_questions = questions
-    else:
-        # Fallback: use empty questions (will show error in UI)
-        viva_session.generated_questions = []
+    # Generate MCQ questions using Perplexity AI
+    questions = perplexity_generate_mcqs(
+        experiment_title=experiment.title,
+        experiment_description=experiment.description or '',
+        lab_name=experiment.lab_config.lab_name,
+        student_id=current_user.id,
+        num_questions=10
+    )
+    viva_session.generated_questions = questions
     
     schedule.enrolled_count += 1
     db.session.add(viva_session)

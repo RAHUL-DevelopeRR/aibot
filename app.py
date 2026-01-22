@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()  # Load .env file before anything else
+
 from flask import Flask, render_template, redirect, url_for
 from flask_login import current_user
 from flask_wtf.csrf import generate_csrf

@@ -6,7 +6,7 @@ from functools import wraps
 from extensions import db
 from models.user import VivaSchedule, VivaSession, Subject, LabConfig, User, Experiment, TeacherSubject, StudentAnswer
 from services.sheets_service import get_sheets_service
-from services.sync_service import sync_experiments_from_sheets, sync_teachers_from_sheets
+from services.sync_service import sync_experiments_from_sheets, sync_teachers_from_sheets, cleanup_old_experiments
 
 teacher_bp = Blueprint('teacher', __name__)
 
@@ -344,6 +344,30 @@ def export_marks(lab_id):
 @teacher_required
 def sync_from_sheets():
     """Sync experiments and labs from Google Sheets"""
+    result = sync_experiments_from_sheets()
+    
+    if result['success']:
+        flash(result['message'], 'success')
+    else:
+        flash(result['message'], 'danger')
+    
+    return redirect(url_for('teacher.dashboard'))
+
+
+@teacher_bp.route('/clean-and-sync')
+@login_required
+@teacher_required
+def clean_and_sync():
+    """Clean all existing experiments and sync fresh from Google Sheets"""
+    # First clean old data
+    cleanup_result = cleanup_old_experiments()
+    if not cleanup_result['success']:
+        flash(f"Cleanup failed: {cleanup_result['message']}", 'danger')
+        return redirect(url_for('teacher.dashboard'))
+    
+    flash(f"Cleaned: {cleanup_result['message']}", 'info')
+    
+    # Then sync from sheets
     result = sync_experiments_from_sheets()
     
     if result['success']:

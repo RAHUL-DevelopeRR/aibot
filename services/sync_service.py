@@ -5,9 +5,55 @@ from typing import Optional
 from services.sheets_service import get_sheets_service
 
 
-def sync_experiments_from_sheets() -> dict:
+def cleanup_old_experiments() -> dict:
+    """
+    Remove all existing experiments, labs, and subjects from the database.
+    This prepares the database for a fresh sync from Google Sheets.
+    
+    Returns:
+        dict with 'success', 'message', and 'deleted' counts
+    """
+    from extensions import db
+    from models.user import Subject, LabConfig, Experiment, VivaSchedule, VivaSession, StudentAnswer
+    
+    try:
+        # Delete in order (respect foreign keys)
+        answers_deleted = StudentAnswer.query.delete()
+        sessions_deleted = VivaSession.query.delete()
+        schedules_deleted = VivaSchedule.query.delete()
+        experiments_deleted = Experiment.query.delete()
+        labs_deleted = LabConfig.query.delete()
+        subjects_deleted = Subject.query.delete()
+        
+        db.session.commit()
+        
+        return {
+            'success': True,
+            'message': f'Cleaned {experiments_deleted} experiments, {labs_deleted} labs, {subjects_deleted} subjects',
+            'deleted': {
+                'answers': answers_deleted,
+                'sessions': sessions_deleted,
+                'schedules': schedules_deleted,
+                'experiments': experiments_deleted,
+                'labs': labs_deleted,
+                'subjects': subjects_deleted
+            }
+        }
+    except Exception as e:
+        db.session.rollback()
+        return {
+            'success': False,
+            'message': f'Cleanup failed: {str(e)}',
+            'deleted': None
+        }
+
+
+def sync_experiments_from_sheets(clean_first: bool = False) -> dict:
     """
     Sync experiments from Google Sheets (Teacher Sheet) to the database.
+    
+    Args:
+        clean_first: If True, removes all existing experiments before syncing
     
     Expected sheet structure in 'Experiments' sheet:
     Exp No | Experiment Name | Lab Name | Description | Max Marks
@@ -20,6 +66,12 @@ def sync_experiments_from_sheets() -> dict:
     """
     from extensions import db
     from models.user import Subject, LabConfig, Experiment
+    
+    # Clean old data first if requested
+    if clean_first:
+        cleanup_result = cleanup_old_experiments()
+        if not cleanup_result['success']:
+            return cleanup_result
     
     sheets = get_sheets_service()
     if not sheets:

@@ -136,3 +136,169 @@ def generate_practice_questions(topic, count=5):
             'questions': result['response']
         }
     return result
+
+
+def generate_mcq_questions(experiment_title, experiment_description, lab_name, student_id, num_questions=10):
+    """
+    Generate random MCQ questions for viva using Perplexity API.
+    
+    Args:
+        experiment_title: Title of the experiment
+        experiment_description: Description of the experiment
+        lab_name: Name of the lab
+        student_id: Student ID (used for randomization)
+        num_questions: Number of MCQs to generate (default 10)
+    
+    Returns:
+        List of MCQ dicts with structure:
+        {
+            'question_number': int,
+            'question': str,
+            'options': {'A': str, 'B': str, 'C': str, 'D': str},
+            'correct_answer': str
+        }
+    """
+    import random
+    
+    prompt = f"""Generate exactly {num_questions} unique multiple choice questions (MCQs) for a lab viva assessment.
+
+Lab: {lab_name}
+Experiment: {experiment_title}
+Description: {experiment_description or 'General concepts related to the experiment'}
+
+Requirements:
+1. Generate exactly {num_questions} MCQ questions
+2. Each question should test understanding of the experiment concepts
+3. Each question should have exactly 4 options (A, B, C, D)
+4. Only ONE option should be correct
+5. Questions should be of moderate difficulty (1 mark each)
+6. Mix conceptual, procedural, and application-based questions
+7. Make questions unique using seed {student_id}
+
+Return ONLY a valid JSON array with this exact structure (no markdown, no explanation, no extra text):
+[
+    {{
+        "question_number": 1,
+        "question": "Question text here?",
+        "options": {{
+            "A": "Option A text",
+            "B": "Option B text",
+            "C": "Option C text",
+            "D": "Option D text"
+        }},
+        "correct_answer": "A"
+    }}
+]"""
+
+    try:
+        headers = {
+            "Authorization": f"Bearer {PERPLEXITY_API_KEY}",
+            "Content-Type": "application/json"
+        }
+
+        payload = {
+            "model": "sonar",
+            "messages": [
+                {"role": "system", "content": "You are an expert lab viva examiner. Generate MCQ questions in valid JSON format only. No markdown, no explanation."},
+                {"role": "user", "content": prompt}
+            ],
+            "max_tokens": 4096,
+            "temperature": 0.8
+        }
+
+        response = requests.post(
+            PERPLEXITY_API_URL,
+            headers=headers,
+            json=payload,
+            timeout=60
+        )
+
+        if response.status_code == 200:
+            data = response.json()
+            response_text = data['choices'][0]['message']['content'].strip()
+            
+            # Clean up response if it has markdown code blocks
+            if response_text.startswith('```'):
+                lines = response_text.split('\n')
+                response_text = '\n'.join(lines[1:-1] if lines[-1] == '```' else lines[1:])
+            
+            # Remove any "json" prefix
+            if response_text.startswith('json'):
+                response_text = response_text[4:].strip()
+            
+            questions = json.loads(response_text)
+            
+            # Validate and fix structure
+            if isinstance(questions, list):
+                for i, q in enumerate(questions):
+                    q['question_number'] = i + 1
+                    if 'correct_answer' not in q or q['correct_answer'] not in ['A', 'B', 'C', 'D']:
+                        q['correct_answer'] = 'A'
+                return questions[:num_questions]
+        
+        # Fallback if API fails
+        return _generate_fallback_mcqs(experiment_title, num_questions)
+        
+    except Exception as e:
+        logger.error(f"Perplexity MCQ generation error: {e}")
+        return _generate_fallback_mcqs(experiment_title, num_questions)
+
+
+def _generate_fallback_mcqs(experiment_title, num_questions):
+    """Generate simple fallback MCQs if API fails"""
+    import random
+    questions = []
+    for i in range(num_questions):
+        questions.append({
+            'question_number': i + 1,
+            'question': f'Question {i+1} about {experiment_title}?',
+            'options': {
+                'A': 'Option A',
+                'B': 'Option B',
+                'C': 'Option C',
+                'D': 'Option D'
+            },
+            'correct_answer': random.choice(['A', 'B', 'C', 'D'])
+        })
+    return questions
+
+
+def evaluate_mcq_answers(questions, student_answers):
+    """
+    Evaluate student MCQ answers against correct answers.
+    
+    Args:
+        questions: List of question dicts with correct_answer
+        student_answers: Dict mapping question_number to student's answer (A/B/C/D)
+    
+    Returns:
+        {
+            'total_marks': int,
+            'obtained_marks': int,
+            'results': [{'question_number': int, 'correct_answer': str, 'student_answer': str, 'is_correct': bool, 'marks': int}]
+        }
+    """
+    results = []
+    obtained_marks = 0
+    
+    for q in questions:
+        q_num = q['question_number']
+        correct = q['correct_answer']
+        student_ans = student_answers.get(q_num, '')
+        is_correct = student_ans.upper() == correct.upper() if student_ans else False
+        marks = 1 if is_correct else 0
+        obtained_marks += marks
+        
+        results.append({
+            'question_number': q_num,
+            'correct_answer': correct,
+            'student_answer': student_ans,
+            'is_correct': is_correct,
+            'marks': marks
+        })
+    
+    return {
+        'total_marks': len(questions),
+        'obtained_marks': obtained_marks,
+        'results': results
+    }
