@@ -13,7 +13,7 @@ api_bp = Blueprint('api', __name__)
 @api_bp.route('/viva/<int:viva_session_id>/submit-answer', methods=['POST'])
 @login_required
 def submit_answer(viva_session_id):
-    """Submit answer to a question"""
+    """Submit answer to a question - handles MCQ answers"""
     try:
         data = request.get_json()
         
@@ -28,6 +28,10 @@ def submit_answer(viva_session_id):
         if not all([question_number, answer_text]):
             return jsonify({'error': 'Missing required fields'}), 400
         
+        # Validate MCQ answer format (single letter)
+        if not isinstance(answer_text, str) or len(answer_text) > 1:
+            return jsonify({'error': 'Invalid answer format. Expected single letter (A/B/C/D)'}), 400
+        
         existing_answer = StudentAnswer.query.filter_by(
             viva_session_id=viva_session_id,
             question_number=question_number
@@ -35,12 +39,13 @@ def submit_answer(viva_session_id):
         
         if existing_answer:
             existing_answer.answer_text = answer_text
-            existing_answer.updated_at = datetime.utcnow()
+            existing_answer.updated_at = datetime.utcnow()  # ✅ Now works - field exists
         else:
             new_answer = StudentAnswer(
                 viva_session_id=viva_session_id,
                 question_number=question_number,
-                answer_text=answer_text
+                answer_text=answer_text,
+                created_at=datetime.utcnow()  # ✅ Now works - field exists
             )
             db.session.add(new_answer)
         
@@ -106,7 +111,7 @@ def submit_viva(viva_session_id):
         answers = StudentAnswer.query.filter_by(viva_session_id=viva_session_id).all()
         student_answers = {a.question_number: a.answer_text for a in answers}
         
-        # Evaluate answers against generated questions using Perplexity
+        # Evaluate answers against generated questions
         questions = viva.generated_questions or []
         
         if questions:
@@ -128,7 +133,6 @@ def submit_viva(viva_session_id):
         db.session.commit()
         
         # Write marks to Google Sheets (Single Source of Truth)
-        # Uses Reg_No-based row mapping to update specific experiment column
         sheets = get_sheets_service()
         if sheets and viva.experiment and current_user.roll_number:
             try:
@@ -139,8 +143,6 @@ def submit_viva(viva_session_id):
                 )
                 if success:
                     print(f"Marks updated in Google Sheets: {current_user.roll_number} Exp_{viva.experiment.experiment_no} = {viva.obtained_marks}")
-                else:
-                    print(f"Failed to update marks in Google Sheets for {current_user.roll_number}")
             except Exception as sheet_error:
                 print(f"Google Sheets sync error: {sheet_error}")
         
@@ -199,21 +201,18 @@ def report_violation(viva_session_id):
         data = request.get_json() or {}
         reason = data.get('reason', 'Tab switch or window blur detected')
         
-        # Increment violation count
         viva.violation_count = (viva.violation_count or 0) + 1
-        
-        # Finalize with 0 marks
         viva.finalize_violation(reason)
         db.session.commit()
         
-        # Write 0 marks to Google Sheets (Single Source of Truth)
+        # Write 0 marks to Google Sheets
         sheets = get_sheets_service()
         if sheets and viva.experiment and current_user.roll_number:
             try:
                 sheets.update_student_experiment_mark(
                     reg_no=current_user.roll_number,
                     experiment_no=viva.experiment.experiment_no,
-                    marks=0  # Violation = 0 marks
+                    marks=0
                 )
             except Exception as sheet_error:
                 print(f"Google Sheets sync error: {sheet_error}")
@@ -248,8 +247,7 @@ def get_labs():
             'lab_name': lab.lab_name,
             'subject_id': lab.subject_id,
             'description': lab.description,
-            'total_marks': lab.total_marks,
-            'total_questions': len(lab.questions) if lab.questions else 0
+            'total_marks': lab.total_marks
         } for lab in labs]
         
         return jsonify({

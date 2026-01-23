@@ -1,8 +1,11 @@
-"""Perplexity AI Service for Chatbot functionality"""
+"""Perplexity AI Service for MCQ generation and chatbot functionality"""
 import requests
 import json
 import logging
 import os
+import hashlib
+import time
+import random
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -65,11 +68,10 @@ Be helpful, educational, and encouraging. Keep responses concise but informative
         )
 
         logger.debug(f"Perplexity API response status: {response.status_code}")
-        logger.debug(f"Perplexity API response: {response.text[:500]}")
 
         if response.status_code == 200:
             data = response.json()
-            assistant_message = data['choices'][0]['message']['content']
+            assistant_message = data['choices']['message']['content']
             return {
                 'success': True,
                 'response': assistant_message
@@ -147,7 +149,7 @@ def generate_mcq_questions(experiment_title, experiment_description, lab_name, s
         experiment_title: Title of the experiment
         experiment_description: Description of the experiment
         lab_name: Name of the lab
-        student_id: Student ID (used for randomization)
+        student_id: Student ID (used for randomization with MD5 hash)
         num_questions: Number of MCQs to generate (default 10)
     
     Returns:
@@ -159,11 +161,17 @@ def generate_mcq_questions(experiment_title, experiment_description, lab_name, s
             'correct_answer': str
         }
     """
-    import random
-    import time
+    # Generate unique seed using MD5 hash of student_id + timestamp
+    # This ensures unique questions for each student but consistent within same second
+    timestamp = str(int(time.time()))
+    hash_input = f"{student_id}_{experiment_title}_{timestamp}".encode()
+    md5_hash = hashlib.md5(hash_input).hexdigest()
+    unique_seed = int(md5_hash[:8], 16)  # Use first 8 hex chars as seed
     
-    # Generate unique seed using timestamp + student_id for true randomness
-    unique_seed = int(time.time() * 1000) + (student_id * 17) + random.randint(1, 10000)
+    # Add randomness
+    random.seed(unique_seed)
+    
+    logger.info(f"Generating MCQs with seed {unique_seed} for student_id={student_id}, experiment={experiment_title}")
     
     # Check if API key is configured
     if not PERPLEXITY_API_KEY:
@@ -177,15 +185,15 @@ Experiment: {experiment_title}
 Description: {experiment_description or 'General concepts related to the experiment'}
 
 CRITICAL REQUIREMENTS:
-1. Generate exactly {num_questions} MCQ questions - each must be DIFFERENT
+1. Generate exactly {num_questions} MCQ questions - each must be DIFFERENT and UNIQUE
 2. Questions must test deep understanding of the experiment
 3. Each question must have exactly 4 options (A, B, C, D)
 4. Only ONE option should be correct for each question
 5. Difficulty: moderate to challenging (1 mark each)
 6. Mix: 40% conceptual, 30% procedural, 30% application-based
-7. RANDOMIZATION SEED: {unique_seed} - use this to ensure unique questions
-8. Do NOT repeat questions from previous generations
-9. Include questions about: algorithms, data structures, time complexity, implementation details
+7. RANDOMIZATION SEED: {unique_seed} - use this to ensure unique questions per student
+8. Do NOT repeat questions - this is student {student_id}'s unique assessment
+9. Include questions about: core concepts, algorithms, implementation details, edge cases
 
 Return ONLY a valid JSON array with this exact structure (no markdown, no explanation, no extra text):
 [
@@ -211,7 +219,7 @@ Return ONLY a valid JSON array with this exact structure (no markdown, no explan
         payload = {
             "model": "sonar",
             "messages": [
-                {"role": "system", "content": "You are an expert lab viva examiner. Generate unique MCQ questions in valid JSON format only. No markdown, no explanation. Each generation must produce completely different questions."},
+                {"role": "system", "content": "You are an expert lab viva examiner. Generate unique MCQ questions in valid JSON format only. No markdown, no explanation. Each generation must produce completely different questions based on the seed provided."},
                 {"role": "user", "content": prompt}
             ],
             "max_tokens": 4096,
@@ -231,7 +239,7 @@ Return ONLY a valid JSON array with this exact structure (no markdown, no explan
 
         if response.status_code == 200:
             data = response.json()
-            response_text = data['choices'][0]['message']['content'].strip()
+            response_text = data['choices']['message']['content'].strip()
             
             # Clean up response if it has markdown code blocks
             if response_text.startswith('```'):
@@ -251,17 +259,17 @@ Return ONLY a valid JSON array with this exact structure (no markdown, no explan
                     if isinstance(q, dict) and 'question' in q and 'options' in q:
                         q['question_number'] = i + 1
                         if 'correct_answer' not in q or q['correct_answer'] not in ['A', 'B', 'C', 'D']:
-                            q['correct_answer'] = 'A'
+                            q['correct_answer'] = random.choice(['A', 'B', 'C', 'D'])
                         validated_questions.append(q)
                 
                 if len(validated_questions) >= num_questions:
-                    logger.info(f"Successfully generated {len(validated_questions)} MCQ questions via Perplexity")
+                    logger.info(f"Successfully generated {len(validated_questions)} unique MCQ questions via Perplexity")
                     return validated_questions[:num_questions]
                 else:
                     logger.warning(f"Only got {len(validated_questions)} valid questions, need {num_questions}")
         
         # API returned but parsing failed
-        logger.error(f"Failed to parse Perplexity response: {response_text[:500]}")
+        logger.error(f"Failed to parse Perplexity response")
         return _generate_fallback_mcqs(experiment_title, num_questions)
         
     except json.JSONDecodeError as e:
@@ -280,9 +288,8 @@ Return ONLY a valid JSON array with this exact structure (no markdown, no explan
 
 def _generate_fallback_mcqs(experiment_title, num_questions):
     """Generate contextual fallback MCQs if API fails - uses experiment-specific templates"""
-    import random
     
-    # Experiment-specific question templates for common lab experiments
+    # Experiment-specific question templates
     experiment_templates = {
         'water jug': [
             {'q': 'What is the state space representation in the Water Jug Problem?', 'a': 'A', 'opts': {'A': 'A tuple (x, y) representing water in each jug', 'B': 'Total water in system', 'C': 'Number of operations performed', 'D': 'Capacity of jugs'}},
@@ -300,7 +307,7 @@ def _generate_fallback_mcqs(experiment_title, num_questions):
         ]
     }
     
-    # Find matching template based on experiment title
+    # Find matching template
     template_key = 'default'
     title_lower = experiment_title.lower()
     for key in experiment_templates.keys():
@@ -311,7 +318,6 @@ def _generate_fallback_mcqs(experiment_title, num_questions):
     templates = experiment_templates[template_key]
     questions = []
     
-    # Use templates and generate additional if needed
     random.shuffle(templates)
     for i in range(num_questions):
         if i < len(templates):
@@ -323,10 +329,9 @@ def _generate_fallback_mcqs(experiment_title, num_questions):
                 'correct_answer': t['a']
             })
         else:
-            # Generate generic questions for remaining slots
             questions.append({
                 'question_number': i + 1,
-                'question': f'Conceptual question {i+1} about {experiment_title}: What is a key consideration?',
+                'question': f'What is a key consideration in {experiment_title}?',
                 'options': {
                     'A': 'Algorithm correctness',
                     'B': 'Time efficiency',
@@ -336,7 +341,7 @@ def _generate_fallback_mcqs(experiment_title, num_questions):
                 'correct_answer': 'D'
             })
     
-    logger.warning(f"Using fallback MCQs for {experiment_title} - Perplexity API unavailable")
+    logger.warning(f"Using fallback MCQs for {experiment_title}")
     return questions
 
 

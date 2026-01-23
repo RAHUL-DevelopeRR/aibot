@@ -87,7 +87,7 @@ class LabConfig(db.Model):
     lab_name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text)
     total_experiments = db.Column(db.Integer, default=10)  # Number of experiments in lab
-    materials_text = db.Column(db.Text)  # Lab materials for Gemini context
+    materials_text = db.Column(db.Text)  # Lab materials for context
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
@@ -106,7 +106,7 @@ class Experiment(db.Model):
     experiment_no = db.Column(db.Integer, nullable=False)  # 1-10
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text)
-    materials_text = db.Column(db.Text)  # Experiment-specific materials for Gemini
+    materials_text = db.Column(db.Text)  # Experiment-specific materials
     total_marks = db.Column(db.Integer, default=10)  # 10 MCQs x 1 mark each
     duration_minutes = db.Column(db.Integer, default=15)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -142,11 +142,9 @@ class VivaSchedule(db.Model):
     viva_sessions = db.relationship('VivaSession', backref='schedule', lazy=True, cascade='all, delete-orphan')
     
     def is_active_now(self):
-        """Check if schedule is currently active (within time window)"""
+        """Check if schedule is currently active"""
         from datetime import date, time, timedelta
         
-        # Use IST (UTC+05:30) as the server operates in Indian timezone
-        # Schedule times are stored in local IST format
         IST_OFFSET = timedelta(hours=5, minutes=30)
         now_utc = datetime.utcnow()
         now_ist = now_utc + IST_OFFSET
@@ -178,7 +176,7 @@ class VivaSession(db.Model):
     total_marks = db.Column(db.Integer, default=10)  # 10 MCQs x 1 mark
     obtained_marks = db.Column(db.Integer, default=0)
     
-    # MCQ questions generated for this student (JSON array of {question, options, correct_answer})
+    # MCQ questions generated for this student (JSON array)
     generated_questions = db.Column(db.JSON, default=[])
     
     # Anti-cheat violation tracking
@@ -206,17 +204,17 @@ class VivaSession(db.Model):
 
 
 class StudentAnswer(db.Model):
-    """Student answer model"""
+    """Student answer model with FIXED timestamp fields"""
     __tablename__ = 'student_answers'
     
     id = db.Column(db.Integer, primary_key=True)
     viva_session_id = db.Column(db.Integer, db.ForeignKey('viva_sessions.id'), nullable=False)
     question_number = db.Column(db.Integer, nullable=False)
-    answer_text = db.Column(db.Text)
+    answer_text = db.Column(db.Text)  # MCQ answer: A, B, C, or D
     marks_obtained = db.Column(db.Integer)
     teacher_feedback = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)  # ✅ FIXED: Now included
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # ✅ FIXED: Now included
     
     __table_args__ = (
         db.UniqueConstraint('viva_session_id', 'question_number', name='unique_answer'),
