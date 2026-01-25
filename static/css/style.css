@@ -1,23 +1,41 @@
-/* ==================== ROOT & VARIABLES ==================== */
+/* ==================== ROOT & VARIABLES - KR CONNECT THEME ==================== */
 :root {
-    --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --primary-color: #667eea;
-    --secondary-color: #764ba2;
-    --success: #4caf50;
-    --danger: #f44336;
-    --warning: #ff9800;
-    --info: #2196f3;
-    --light: #f5f5f5;
-    --dark: #333;
-    --gray: #666;
-    --border: #ddd;
+    /* KR CONNECT Brand Colors */
+    --kr-blue: #003366;
+    --kr-blue-dark: #002244;
+    --kr-blue-light: #004488;
+    --kr-red: #C41E3A;
+    --kr-red-dark: #A01830;
+    --kr-white: #FFFFFF;
 
-    --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    --font-mono: 'Courier New', monospace;
+    /* Primary theme using KR colors */
+    --primary: linear-gradient(135deg, #003366 0%, #004488 100%);
+    --primary-color: #003366;
+    --secondary-color: #C41E3A;
+    --accent-gradient: linear-gradient(135deg, #C41E3A 0%, #E63850 100%);
 
-    --transition: all 0.3s ease;
-    --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+    --success: #28a745;
+    --danger: #dc3545;
+    --warning: #ffc107;
+    --info: #17a2b8;
+    --light: #f8f9fa;
+    --dark: #1a1a2e;
+    --gray: #6c757d;
+    --border: #dee2e6;
+
+    /* Professional Fonts */
+    --font-main: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-heading: 'Poppins', 'Segoe UI', sans-serif;
+    --font-mono: 'Fira Code', 'Courier New', monospace;
+
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --shadow: 0 2px 10px rgba(0, 51, 102, 0.08);
+    --shadow-lg: 0 10px 40px rgba(0, 51, 102, 0.15);
+    --shadow-card: 0 4px 20px rgba(0, 51, 102, 0.1);
+
+    /* Glass effect */
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(0, 51, 102, 0.1);
 }
 
 /* ==================== RESET & BASE ==================== */
@@ -95,10 +113,10 @@ a:hover {
     padding: 0 20px;
 }
 
-/* ==================== NAVBAR ==================== */
+/* ==================== NAVBAR - KR CONNECT ==================== */
 .navbar {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    background: linear-gradient(135deg, #003366 0%, #004488 100%);
+    box-shadow: 0 4px 20px rgba(0, 51, 102, 0.3);
     position: sticky;
     top: 0;
     z-index: 100;

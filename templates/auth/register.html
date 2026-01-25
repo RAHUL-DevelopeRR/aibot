@@ -1,125 +1,241 @@
 {% extends "base.html" %}
 
-{% block title %}Register - Lab Viva Assistant{% endblock %}
+{% block title %}Register - KR Viva Assistant{% endblock %}
 
 {% block content %}
-<div class="auth-container">
-    <div class="auth-box">
-        <div class="auth-header">
-            <div class="auth-icon">
-                <i class="fas fa-user-plus"></i>
+<div class="kr-auth-container">
+    <div class="kr-auth-wrapper">
+        <!-- Left Panel - Branding -->
+        <div class="kr-auth-brand">
+            <div class="brand-content">
+                <img src="https://mkce.ac.in/images/MKCE%20Logo.png" alt="KR Logo" class="auth-logo">
+                <h1>Join KR Viva</h1>
+                <p class="tagline">M. Kumarasamy College of Engineering</p>
+                <div class="brand-features">
+                    <div class="feature">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Verified Student Records</span>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-lock"></i>
+                        <span>Secure Authentication</span>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-bolt"></i>
+                        <span>Instant Access</span>
+                    </div>
+                </div>
             </div>
-            <h1>Create Account</h1>
-            <p>Join Lab Viva Assistant</p>
+            <div class="brand-footer">
+                <p>Part of <strong>KR CONNECT</strong> Ecosystem</p>
+            </div>
         </div>
 
-        <form method="POST" class="auth-form" id="registerForm">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <!-- Right Panel - Register Form -->
+        <div class="kr-auth-form-panel">
+            <div class="kr-auth-box">
+                <div class="auth-header">
+                    <h2>Create Account</h2>
+                    <p>Register for KR Viva Assistant</p>
+                </div>
 
-            <div class="form-group">
-                <label class="form-label"><i class="fas fa-id-badge"></i> Register As</label>
-                <select name="role" id="roleSelect" class="form-input" required>
-                    <option value="">Select Role</option>
-                    <option value="student" selected>Student</option>
-                    <option value="teacher">Teacher</option>
-                </select>
+                <form method="POST" class="kr-auth-form" id="registerForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="role-selector">
+                        <label class="role-option">
+                            <input type="radio" name="role" value="student" checked>
+                            <span class="role-card">
+                                <i class="fas fa-user-graduate"></i>
+                                <span>Student</span>
+                            </span>
+                        </label>
+                        <label class="role-option">
+                            <input type="radio" name="role" value="teacher">
+                            <span class="role-card">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                                <span>Faculty</span>
+                            </span>
+                        </label>
+                    </div>
+
+                    <!-- Student Registration -->
+                    <div id="studentFields">
+                        <div class="form-group">
+                            <label class="form-label"><i class="fas fa-id-card"></i> Registration Number <span
+                                    class="required">*</span></label>
+                            <input type="text" name="roll_number" class="form-input" placeholder="e.g., 927623BCB041"
+                                required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label"><i class="fas fa-user"></i> Your Name <span
+                                    class="required">*</span></label>
+                            <input type="text" name="name" class="form-input" placeholder="As per college records"
+                                required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label"><i class="fas fa-envelope"></i> Email <span
+                                    class="optional">(Optional)</span></label>
+                            <input type="email" name="email" class="form-input" placeholder="your@email.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label"><i class="fas fa-lock"></i> Password <span
+                                    class="required">*</span></label>
+                            <input type="password" name="password" class="form-input" placeholder="Create a password"
+                                required minlength="6">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label"><i class="fas fa-lock"></i> Confirm Password <span
+                                    class="required">*</span></label>
+                            <input type="password" name="confirm_password" class="form-input"
+                                placeholder="Confirm password" required>
+                        </div>
+                    </div>
+
+                    <!-- Faculty Registration -->
+                    <div id="teacherFields" style="display: none;">
+                        <div class="form-group">
+                            <label class="form-label"><i class="fas fa-user"></i> Full Name <span
+                                    class="required">*</span></label>
+                            <input type="text" name="teacher_name" class="form-input" placeholder="Full Name">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label"><i class="fas fa-envelope"></i> Email <span
+                                    class="required">*</span></label>
+                            <input type="email" name="teacher_email" class="form-input"
+                                placeholder="faculty@mkce.ac.in">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label"><i class="fas fa-lock"></i> Password <span
+                                    class="required">*</span></label>
+                            <input type="password" name="teacher_password" class="form-input"
+                                placeholder="Create a password">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label"><i class="fas fa-lock"></i> Confirm Password <span
+                                    class="required">*</span></label>
+                            <input type="password" name="teacher_confirm" class="form-input"
+                                placeholder="Confirm password">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="kr-btn kr-btn-primary">
+                        <i class="fas fa-user-plus"></i> Create Account
+                    </button>
+                </form>
+
+                <div class="auth-footer">
+                    <p>Already have an account? <a href="{{ url_for('auth.login') }}">Sign In</a></p>
+                </div>
             </div>
-
-            <!-- Student Registration Fields -->
-            <div id="studentFields">
-                <div class="form-group">
-                    <label class="form-label"><i class="fas fa-id-card"></i> Registration Number <span
-                            class="required">*</span></label>
-                    <input type="text" name="roll_number" class="form-input" placeholder="e.g., 927623BCB041" required>
-                    <small class="form-hint">Enter your 12-digit Reg No (any format accepted)</small>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label"><i class="fas fa-user"></i> Your Name <span
-                            class="required">*</span></label>
-                    <input type="text" name="name" class="form-input" placeholder="e.g., Rahul S" required>
-                    <small class="form-hint">Must match your name in student records</small>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label"><i class="fas fa-envelope"></i> Email <span
-                            class="optional">(optional)</span></label>
-                    <input type="email" name="email" class="form-input" placeholder="your@email.com">
-                    <small class="form-hint">Optional - for notifications only</small>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label"><i class="fas fa-lock"></i> Password <span
-                            class="optional">(optional)</span></label>
-                    <input type="password" name="password" class="form-input"
-                        placeholder="Leave empty to use Reg No as password">
-                    <small class="form-hint">Optional - defaults to your Reg No</small>
-                </div>
-            </div>
-
-            <!-- Teacher Registration Fields -->
-            <div id="teacherFields" style="display: none;">
-                <div class="form-group">
-                    <label class="form-label"><i class="fas fa-user"></i> Full Name <span
-                            class="required">*</span></label>
-                    <input type="text" name="teacher_name" class="form-input" placeholder="Full Name">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label"><i class="fas fa-envelope"></i> Email <span
-                            class="required">*</span></label>
-                    <input type="email" name="teacher_email" class="form-input" placeholder="your@email.com">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label"><i class="fas fa-id-card"></i> Teacher ID</label>
-                    <input type="text" name="teacher_id" class="form-input" placeholder="Optional">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label"><i class="fas fa-lock"></i> Password <span
-                            class="required">*</span></label>
-                    <input type="password" name="teacher_password" class="form-input" placeholder="••••••••">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label"><i class="fas fa-lock"></i> Confirm Password <span
-                            class="required">*</span></label>
-                    <input type="password" name="confirm_password" class="form-input" placeholder="••••••••">
-                </div>
-            </div>
-
-            <button type="submit" class="btn btn-primary btn-full">
-                <i class="fas fa-user-plus"></i> Create Account
-            </button>
-        </form>
-
-        <div class="auth-footer">
-            <p>Already have an account? <a href="{{ url_for('auth.login') }}"><i class="fas fa-sign-in-alt"></i> Login
-                    here</a></p>
         </div>
     </div>
 </div>
 
 <style>
-    .auth-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
+    /* KR CONNECT Auth Styles */
+    .kr-auth-container {
         min-height: calc(100vh - 80px);
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #003366 0%, #001a33 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
         padding: 20px;
     }
 
-    .auth-box {
-        background: white;
-        border-radius: 10px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-        padding: 40px;
+    .kr-auth-wrapper {
+        display: flex;
         width: 100%;
-        max-width: 420px;
+        max-width: 1000px;
+        background: #fff;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+    }
+
+    .kr-auth-brand {
+        flex: 1;
+        background: linear-gradient(180deg, #003366 0%, #002244 100%);
+        padding: 50px 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        color: white;
+    }
+
+    .brand-content {
+        text-align: center;
+    }
+
+    .auth-logo {
+        width: 100px;
+        height: auto;
+        margin-bottom: 20px;
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    }
+
+    .kr-auth-brand h1 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: white;
+    }
+
+    .tagline {
+        opacity: 0.85;
+        font-size: 0.95rem;
+        margin-bottom: 40px;
+    }
+
+    .brand-features {
+        text-align: left;
+    }
+
+    .feature {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .feature i {
+        width: 36px;
+        height: 36px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .brand-footer {
+        text-align: center;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        opacity: 0.7;
+    }
+
+    .kr-auth-form-panel {
+        flex: 1;
+        padding: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         max-height: 90vh;
         overflow-y: auto;
+    }
+
+    .kr-auth-box {
+        width: 100%;
+        max-width: 380px;
     }
 
     .auth-header {
@@ -127,96 +243,167 @@
         margin-bottom: 25px;
     }
 
-    .auth-header h1 {
-        color: #333;
-        margin: 0 0 5px 0;
+    .auth-header h2 {
+        color: #003366;
+        font-size: 1.6rem;
+        margin-bottom: 8px;
     }
 
     .auth-header p {
         color: #666;
-        margin: 0;
     }
 
-    .auth-form {
+    .role-selector {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .role-option {
+        flex: 1;
+    }
+
+    .role-option input {
+        display: none;
+    }
+
+    .role-card {
         display: flex;
         flex-direction: column;
-        gap: 15px;
+        align-items: center;
+        gap: 6px;
+        padding: 14px 10px;
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s;
+        background: #f8f9fa;
+    }
+
+    .role-card i {
+        font-size: 1.3rem;
+        color: #666;
+    }
+
+    .role-card span {
+        font-weight: 600;
+        color: #333;
+        font-size: 0.85rem;
+    }
+
+    .role-option input:checked+.role-card {
+        border-color: #003366;
+        background: linear-gradient(135deg, #003366 0%, #004488 100%);
+    }
+
+    .role-option input:checked+.role-card i,
+    .role-option input:checked+.role-card span {
+        color: white;
+    }
+
+    .kr-auth-form {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
     }
 
     .form-group {
         display: flex;
         flex-direction: column;
-        margin-bottom: 3px;
     }
 
     .form-label {
         font-weight: 600;
         color: #333;
         margin-bottom: 6px;
-        font-size: 13px;
+        font-size: 0.85rem;
     }
 
-    .form-input {
-        padding: 10px 12px;
-        border: 2px solid #e0e0e0;
-        border-radius: 5px;
-        font-size: 14px;
-        transition: border-color 0.3s;
-    }
-
-    .form-input:focus {
-        outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
-    .form-hint {
-        font-size: 11px;
-        color: #888;
-        margin-top: 4px;
+    .form-label i {
+        color: #003366;
+        margin-right: 8px;
+        width: 16px;
     }
 
     .required {
-        color: #e74c3c;
+        color: #C41E3A;
     }
 
     .optional {
         color: #888;
         font-weight: 400;
-        font-size: 11px;
+        font-size: 0.75rem;
     }
 
-    .btn-full {
-        width: 100%;
+    .form-input {
+        padding: 12px 14px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        transition: all 0.3s;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #003366;
+        box-shadow: 0 0 0 4px rgba(0, 51, 102, 0.1);
+    }
+
+    .kr-btn {
+        padding: 14px 20px;
+        border: none;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
         margin-top: 10px;
+    }
+
+    .kr-btn-primary {
+        background: linear-gradient(135deg, #003366 0%, #004488 100%);
+        color: white;
+    }
+
+    .kr-btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 51, 102, 0.35);
     }
 
     .auth-footer {
         text-align: center;
-        margin-top: 15px;
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 1px solid #eee;
         color: #666;
-        font-size: 13px;
     }
 
     .auth-footer a {
-        color: #667eea;
-        text-decoration: none;
+        color: #C41E3A;
         font-weight: 600;
+        text-decoration: none;
     }
 
-    .auth-icon {
-        font-size: 60px;
-        color: #667eea;
-        margin-bottom: 15px;
+    .auth-footer a:hover {
+        text-decoration: underline;
     }
 
-    .form-label i {
-        margin-right: 8px;
-        color: #667eea;
-    }
+    @media (max-width: 768px) {
+        .kr-auth-wrapper {
+            flex-direction: column;
+        }
 
-    .auth-footer a i {
-        margin-right: 5px;
+        .kr-auth-brand {
+            padding: 30px 20px;
+        }
+
+        .brand-features {
+            display: none;
+        }
     }
 
     #studentFields,
@@ -228,58 +415,46 @@
 </style>
 
 <script>
-    document.getElementById('roleSelect').addEventListener('change', function () {
-        const studentFields = document.getElementById('studentFields');
-        const teacherFields = document.getElementById('teacherFields');
+    const roleInputs = document.querySelectorAll('input[name="role"]');
+    const studentFields = document.getElementById('studentFields');
+    const teacherFields = document.getElementById('teacherFields');
 
-        if (this.value === 'student') {
-            studentFields.style.display = 'flex';
-            teacherFields.style.display = 'none';
-        } else if (this.value === 'teacher') {
-            studentFields.style.display = 'none';
-            teacherFields.style.display = 'flex';
-        } else {
-            studentFields.style.display = 'none';
-            teacherFields.style.display = 'none';
-        }
+    roleInputs.forEach(input => {
+        input.addEventListener('change', function () {
+            if (this.value === 'student') {
+                studentFields.style.display = 'flex';
+                teacherFields.style.display = 'none';
+            } else {
+                studentFields.style.display = 'none';
+                teacherFields.style.display = 'flex';
+            }
+        });
     });
 
     // Copy teacher fields to main form fields before submit
     document.getElementById('registerForm').addEventListener('submit', function (e) {
-        const role = document.getElementById('roleSelect').value;
-
+        const role = document.querySelector('input[name="role"]:checked').value;
         if (role === 'teacher') {
-            // Copy teacher fields to standard field names
-            const teacherName = document.querySelector('input[name="teacher_name"]');
-            const teacherEmail = document.querySelector('input[name="teacher_email"]');
-            const teacherPassword = document.querySelector('input[name="teacher_password"]');
-            const teacherId = document.querySelector('input[name="teacher_id"]');
-
-            // Create hidden inputs with standard names
-            if (teacherName.value) {
-                createHiddenInput(this, 'name', teacherName.value);
-            }
-            if (teacherEmail.value) {
-                createHiddenInput(this, 'email', teacherEmail.value);
-            }
-            if (teacherPassword.value) {
-                createHiddenInput(this, 'password', teacherPassword.value);
-            }
-            if (teacherId.value) {
-                createHiddenInput(this, 'roll_number', teacherId.value);
+            const inputs = {
+                'teacher_name': 'name',
+                'teacher_email': 'email',
+                'teacher_password': 'password',
+                'teacher_confirm': 'confirm_password'
+            };
+            for (const [src, dst] of Object.entries(inputs)) {
+                const srcInput = document.querySelector(`input[name="${src}"]`);
+                if (srcInput && srcInput.value) {
+                    let dstInput = document.querySelector(`input[name="${dst}"][type="hidden"]`);
+                    if (!dstInput) {
+                        dstInput = document.createElement('input');
+                        dstInput.type = 'hidden';
+                        dstInput.name = dst;
+                        this.appendChild(dstInput);
+                    }
+                    dstInput.value = srcInput.value;
+                }
             }
         }
     });
-
-    function createHiddenInput(form, name, value) {
-        let input = form.querySelector(`input[name="${name}"][type="hidden"]`);
-        if (!input) {
-            input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = name;
-            form.appendChild(input);
-        }
-        input.value = value;
-    }
 </script>
 {% endblock %}

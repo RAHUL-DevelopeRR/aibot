@@ -590,28 +590,45 @@ class SheetsService:
     def _normalize_reg_no(self, reg_no: str) -> str:
         """
         Normalize registration number for comparison.
+        Rules:
         - Convert to uppercase
-        - Remove spaces, dots, and special characters
+        - Remove spaces, dots, and ALL special characters
+        
+        Examples (all become '927623BCB041'):
+        - 927623BCB041
+        - 927623bcb041
+        - 927623 BCB 041
+        - 927623.BCB.041
         """
         import re
         if not reg_no:
             return ''
         # Remove all non-alphanumeric characters and convert to uppercase
-        return re.sub(r'[^A-Z0-9]', '', reg_no.upper())
+        normalized = re.sub(r'[^A-Z0-9]', '', reg_no.upper())
+        return normalized
     
     def _normalize_name(self, name: str) -> str:
         """
         Normalize student name for comparison.
+        Rules:
         - Convert to uppercase
-        - Remove spaces, dots, and punctuation
-        - Sort characters to handle order variations (e.g., "S RAHUL" vs "RAHUL S")
+        - Remove spaces, dots, and all punctuation
+        - SORT alphabetically to handle order variations
+        
+        Examples (all become 'AHLORSU' - sorted letters of RAHULS):
+        - RAHUL S -> AHLORSU
+        - rahuls -> AHLORSU
+        - S RAHUL -> AHLORSU
+        - S.Rahul -> AHLORSU
         """
         import re
         if not name:
             return ''
         # Remove all non-alphabetic characters and convert to uppercase
         cleaned = re.sub(r'[^A-Z]', '', name.upper())
-        return cleaned
+        # Sort characters to make order-independent
+        sorted_name = ''.join(sorted(cleaned))
+        return sorted_name
     
     def get_all_students_with_marks(self, sheet_name: str = 'Sheet1') -> List[Dict]:
         """

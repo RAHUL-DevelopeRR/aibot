@@ -23,10 +23,11 @@ def login():
         password = request.form.get('password', '').strip()
         role = request.form.get('role', '').strip()
         
-        # For students: Validate against Google Sheets
+        # For students: Validate against Google Sheets + Password
         if role == 'student':
-            if not all([roll_number, name]):
-                flash('Registration Number and Name are required.', 'danger')
+            # Password is MANDATORY
+            if not all([roll_number, name, password]):
+                flash('Registration Number, Name, and Password are required.', 'danger')
                 return redirect(url_for('auth.login'))
             
             # Verify against Google Sheets
@@ -37,21 +38,17 @@ def login():
                     flash('Registration number and name not found in student records.', 'danger')
                     return redirect(url_for('auth.login'))
                 
-                # Check if user exists in local database, if not create
+                # Check if user exists in local database
                 user = User.query.filter_by(roll_number=_normalize_reg_no(roll_number)).first()
                 
                 if not user:
-                    # Auto-create user from Google Sheets data
-                    user = User(
-                        name=student_data['name'],
-                        email=f"{_normalize_reg_no(roll_number)}@student.local",  # Placeholder email
-                        roll_number=_normalize_reg_no(roll_number),
-                        role='student'
-                    )
-                    user.set_password(roll_number)  # Default password is Reg_No
-                    db.session.add(user)
-                    db.session.commit()
-                    flash('Account created from student records. Welcome!', 'success')
+                    flash('Account not found. Please register first.', 'danger')
+                    return redirect(url_for('auth.register'))
+                
+                # Verify password
+                if not user.check_password(password):
+                    flash('Invalid password.', 'danger')
+                    return redirect(url_for('auth.login'))
                 
                 login_user(user, remember=True)
                 return redirect(url_for('student.dashboard'))

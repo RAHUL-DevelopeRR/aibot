@@ -5,7 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{% block title %}Lab Viva Assistant{% endblock %}</title>
+    <title>{% block title %}KR Viva Assistant{% endblock %}</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -14,8 +20,10 @@
     <nav class="navbar">
         <div class="nav-container">
             <a href="/" class="navbar-brand">
-                <span class="brand-icon"><i class="fas fa-atom fa-spin-hover"></i></span>
-                <span class="brand-text">Lab Viva Assistant</span>
+                <!-- KR Logo -->
+                <img src="https://mkce.ac.in/images/MKCE%20Logo.png" alt="KR Logo" class="brand-logo"
+                    style="height: 40px; width: auto;">
+                <span class="brand-text">KR Viva Assistant</span>
             </a>
             <ul class="nav-menu">
                 {% if current_user.is_authenticated %}
@@ -29,8 +37,8 @@
                         <span>Available Vivaes</span>
                     </a></li>
                 <li><a href="{{ url_for('chatbot.chatbot_widget') }}" class="nav-link">
-                        <span class="nav-icon ai-icon"><i class="fas fa-magic"></i></span>
-                        <span>AI Assistant</span>
+                        <span class="nav-icon ai-icon"><i class="fas fa-graduation-cap"></i></span>
+                        <span>KR Assistant</span>
                     </a></li>
                 {% elif current_user.role == 'teacher' %}
                 <li><a href="{{ url_for('teacher.dashboard') }}" class="nav-link">
@@ -46,8 +54,8 @@
                         <span>Schedule Viva</span>
                     </a></li>
                 <li><a href="{{ url_for('chatbot.chatbot_widget') }}" class="nav-link">
-                        <span class="nav-icon ai-icon"><i class="fas fa-magic"></i></span>
-                        <span>AI Assistant</span>
+                        <span class="nav-icon ai-icon"><i class="fas fa-graduation-cap"></i></span>
+                        <span>KR Assistant</span>
                     </a></li>
                 {% endif %}
                 <li class="user-menu">
@@ -68,7 +76,7 @@
                         <span>Login</span>
                     </a></li>
                 <li><a href="{{ url_for('auth.register') }}" class="btn-register">
-                        <i class="fas fa-rocket"></i> Get Started
+                        <i class="fas fa-user-plus"></i> Get Started
                     </a></li>
                 {% endif %}
             </ul>
@@ -98,16 +106,15 @@
     <footer class="footer">
         <div class="footer-content">
             <div class="footer-brand">
-                <span class="footer-icon"><i class="fas fa-atom"></i></span>
-                <span>Lab Viva Assistant</span>
+                <img src="https://mkce.ac.in/images/MKCE%20Logo.png" alt="KR Logo"
+                    style="height: 30px; width: auto; margin-right: 10px;">
+                <span>KR Viva Assistant</span>
             </div>
-            <p>&copy; 2024 Lab Viva Assistant. Made with <i class="fas fa-heart" style="color: #f5576c;"></i> for
-                education.</p>
+            <p>© KR Group – KR CONNECT | Developed & Maintained by <strong>S Rahul</strong></p>
         </div>
     </footer>
 
     <script src="{{ url_for('static', filename='js/security.js') }}"></script>
-    {# ISOLATION: Chatbot JS is NOT loaded globally. It must be included only on AI Assistant page. #}
     <script>
         // Hamburger menu toggle
         document.querySelector('.hamburger').addEventListener('click', function () {
