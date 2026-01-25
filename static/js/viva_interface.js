@@ -57,7 +57,7 @@ async function saveAnswer(questionNum, selectedOption) {
                 answer_text: selectedOption
             })
         });
-        
+
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             if (response.status === 401) {
@@ -69,7 +69,7 @@ async function saveAnswer(questionNum, selectedOption) {
             showToast('Server error. Please try again.', 'error');
             return;
         }
-        
+
         const data = await response.json();
 
         if (response.ok && data.success) {
@@ -158,7 +158,7 @@ async function submitViva() {
                 'X-CSRFToken': getCookie('csrf_token')
             }
         });
-        
+
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             if (response.status === 401) {
@@ -170,7 +170,7 @@ async function submitViva() {
             showToast('Server error. Please try again.', 'error');
             return;
         }
-        
+
         const data = await response.json();
 
         if (response.ok && data.success) {
@@ -228,7 +228,7 @@ function showToast(message, type = 'info', duration = 3000) {
     else if (type === 'error') toast.style.background = 'linear-gradient(135deg, #dc3545, #c82333)';
     else if (type === 'warning') toast.style.background = 'linear-gradient(135deg, #ffc107, #e0a800)';
     else toast.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
-    
+
     document.body.appendChild(toast);
     setTimeout(() => {
         toast.style.animation = 'slideOut 0.3s ease';
@@ -241,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatbotWindow = document.getElementById('chatbot-window');
     if (chatbotBtn) chatbotBtn.style.display = 'none';
     if (chatbotWindow) chatbotWindow.style.display = 'none';
-    
+
     console.log('Viva interface loaded');
 });
 
@@ -249,30 +249,35 @@ function enterFullscreenMode() {
     const elem = document.documentElement;
     const enterFS = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.msRequestFullscreen;
 
-    if (enterFS) {
-        enterFS.call(elem).then(() => {
-            document.getElementById('fullscreen-modal').classList.add('hidden');
-
-            if (window.AntiCheat) {
-                AntiCheat.init(vivaId);
-            }
-
-            if (questions.length > 0) {
-                showQuestion(1);
-            }
-            updateProgress();
-        }).catch(err => {
-            console.error('Fullscreen failed:', err);
-            alert('Fullscreen is required. Please allow fullscreen and try again.');
-        });
-    } else {
+    function showVivaContent() {
+        // CRITICAL: Hide fullscreen modal and show viva container
         document.getElementById('fullscreen-modal').classList.add('hidden');
+        const vivaContainer = document.getElementById('viva-container');
+        if (vivaContainer) {
+            vivaContainer.classList.remove('hidden');
+        }
+
         if (window.AntiCheat) {
             AntiCheat.init(vivaId);
         }
+
         if (questions.length > 0) {
             showQuestion(1);
         }
         updateProgress();
+    }
+
+    if (enterFS) {
+        enterFS.call(elem).then(() => {
+            showVivaContent();
+        }).catch(err => {
+            console.error('Fullscreen failed:', err);
+            // Still show content even if fullscreen fails (for testing/development)
+            showVivaContent();
+            alert('Fullscreen is recommended but not required. You may proceed.');
+        });
+    } else {
+        // Fallback for browsers without fullscreen API
+        showVivaContent();
     }
 }

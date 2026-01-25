@@ -1,0 +1,51 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Exam | {{ experiment.name }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/security.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/exam.css') }}">
+</head>
+<body class="exam-mode">
+    <div class="animated-bg"><div class="floating-shapes"><div class="shape shape-1"></div><div class="shape shape-2"></div><div class="shape shape-3"></div><div class="shape shape-4"></div><div class="shape shape-5"></div></div></div>
+    <div class="container">
+        <header class="header">
+            <div class="logo"><div class="logo-icon"><i class="fas fa-shield-alt"></i></div><div class="logo-text"><h1>Secure Viva</h1><span class="tagline">MCQ Assessment</span></div></div>
+            <div class="header-badge exam-badge"><i class="fas fa-lock"></i><span>Secure Mode</span></div>
+        </header>
+        <div class="selected-experiment"><div class="experiment-badge"><i class="fas fa-beaker"></i><span id="experiment-name">{{ experiment.number }}: {{ experiment.name }}</span></div></div>
+        <div id="loading-section" class="generator-card glass-card">
+            <div class="card-header"><h2><i class="fas fa-cogs"></i> Generating Questions</h2><p>Please wait while we prepare your exam...</p></div>
+            <div class="experiments-loading"><i class="fas fa-spinner fa-spin"></i><span>Generating MCQs...</span></div>
+        </div>
+        <div id="results-section" class="results-section hidden">
+            <div class="results-header"><h2><i class="fas fa-clipboard-question"></i> Exam Questions</h2><div class="score-display" id="score-display"><span class="score-label">Score:</span><span class="score-value" id="score-value">0</span><span class="score-total">/<span id="total-questions">0</span></span></div></div>
+            <div id="questions-container" class="questions-container"></div>
+            <div class="results-actions"><button id="submit-all-btn" class="action-btn primary-btn"><i class="fas fa-check-circle"></i> Submit All Answers</button></div>
+        </div>
+        <footer class="footer"><p><i class="fas fa-shield-alt"></i> Secure exam environment</p></footer>
+    </div>
+    <div id="toast" class="toast"><i class="toast-icon"></i><span class="toast-message"></span></div>
+    <script>
+        window.EXAM_CONFIG = {
+            experimentId: {{ experiment.id | tojson }},
+            experimentName: {{ experiment.name | tojson }},
+            experimentTopic: {{ experiment.mcq_topic | tojson }},
+            studentSession: {{ student_session | tojson }},
+            studentRegNo: {{ student_reg_no | tojson }},
+            vivaSessionId: {{ viva_session_id | tojson }},
+            generateUrl: '/viva/api/generate',
+            saveMarksUrl: '/viva/api/save-marks',
+            violationUrl: '/viva/api/violation',
+            homeUrl: '/student/dashboard'
+        };
+    </script>
+    <script src="{{ url_for('static', filename='js/exam.js') }}"></script>
+</body>
+</html>

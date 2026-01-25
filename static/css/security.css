@@ -1,0 +1,310 @@
+/* ===============================================
+   SECURITY MODULE STYLES
+   Modal, notifications, and security UI elements
+   =============================================== */
+
+/* =========================================
+   Security Modal Base Styles
+   ========================================= */
+.security-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.security-modal.hidden {
+    display: none;
+}
+
+/* Modal Overlay */
+.security-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+}
+
+/* Modal Content Box */
+.security-modal-content {
+    position: relative;
+    z-index: 1;
+    background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 48px;
+    max-width: 450px;
+    width: 90%;
+    text-align: center;
+    box-shadow:
+        0 25px 50px rgba(0, 0, 0, 0.5),
+        0 0 100px rgba(102, 126, 234, 0.1);
+    animation: slideUp 0.4s ease;
+}
+
+.security-modal-content.blocked {
+    border-color: rgba(239, 68, 68, 0.3);
+    box-shadow:
+        0 25px 50px rgba(0, 0, 0, 0.5),
+        0 0 100px rgba(239, 68, 68, 0.2);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* =========================================
+   Security Icons
+   ========================================= */
+.security-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulse-icon 2s infinite;
+}
+
+.security-icon svg {
+    width: 40px;
+    height: 40px;
+}
+
+.security-icon.warning {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.1) 100%);
+    border: 2px solid rgba(245, 158, 11, 0.5);
+    color: #f59e0b;
+}
+
+.security-icon.error {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%);
+    border: 2px solid rgba(239, 68, 68, 0.5);
+    color: #ef4444;
+}
+
+.security-icon.info {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(102, 126, 234, 0.1) 100%);
+    border: 2px solid rgba(102, 126, 234, 0.5);
+    color: #667eea;
+}
+
+@keyframes pulse-icon {
+
+    0%,
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 currentColor;
+    }
+
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* =========================================
+   Security Modal Typography
+   ========================================= */
+.security-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+}
+
+.security-title.error {
+    color: #ef4444;
+}
+
+.security-message {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.security-note {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 16px;
+}
+
+/* =========================================
+   Violation Counter
+   ========================================= */
+.security-violation-counter {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 24px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 100px;
+    color: #ef4444;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 24px;
+}
+
+.security-violation-counter #violation-count {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+/* =========================================
+   Security Buttons
+   ========================================= */
+.security-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 40px;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: inherit;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+}
+
+.security-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.5);
+}
+
+.security-btn:active {
+    transform: translateY(0);
+}
+
+.security-btn.primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* =========================================
+   Keyboard Blocked Notification
+   ========================================= */
+.keyboard-notification {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 24px;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    border-radius: 100px;
+    color: #ef4444;
+    font-size: 0.9rem;
+    font-weight: 500;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 9999;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.keyboard-notification svg {
+    flex-shrink: 0;
+}
+
+.keyboard-notification.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* =========================================
+   User-Select Prevention (via CSS)
+   ========================================= */
+body.exam-mode {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+body.exam-mode input,
+body.exam-mode textarea {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+}
+
+/* =========================================
+   Responsive Adjustments
+   ========================================= */
+@media (max-width: 480px) {
+    .security-modal-content {
+        padding: 32px 24px;
+        margin: 20px;
+    }
+
+    .security-icon {
+        width: 64px;
+        height: 64px;
+    }
+
+    .security-icon svg {
+        width: 32px;
+        height: 32px;
+    }
+
+    .security-title {
+        font-size: 1.5rem;
+    }
+
+    .security-btn {
+        width: 100%;
+        padding: 14px 24px;
+    }
+
+    .keyboard-notification {
+        left: 20px;
+        right: 20px;
+        width: auto;
+        transform: translateX(0) translateY(20px);
+    }
+
+    .keyboard-notification.show {
+        transform: translateX(0) translateY(0);
+    }
+}

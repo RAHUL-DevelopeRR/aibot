@@ -516,12 +516,12 @@ class SheetsService:
                 return None
             
             # Normalize input reg_no for case-insensitive comparison
-            reg_no_upper = reg_no.strip().upper()
+            reg_no_normalized = self._normalize_reg_no(reg_no)
             
             for row in values[1:]:  # Skip header
                 if row:
-                    sheet_reg_no = (row[0] if len(row) > 0 else '').strip().upper()
-                    if sheet_reg_no == reg_no_upper:
+                    sheet_reg_no = self._normalize_reg_no(row[0] if len(row) > 0 else '')
+                    if sheet_reg_no == reg_no_normalized:
                         return {
                             'reg_no': row[0] if len(row) > 0 else '',
                             'name': row[1] if len(row) > 1 else ''
@@ -532,6 +532,86 @@ class SheetsService:
         except Exception as e:
             print(f"Error validating student reg_no: {e}")
             return None
+    
+    def validate_student_by_reg_and_name(self, reg_no: str, name: str, sheet_name: str = 'Sheet1') -> Optional[Dict]:
+        """
+        Validate student by BOTH Reg_No AND Name from Google Sheets.
+        BOTH must match the SAME row for authentication to succeed.
+        
+        Normalization rules:
+        - Reg_No: uppercase, remove spaces/dots/special chars
+        - Name: uppercase, remove spaces/dots/punctuation
+        
+        Args:
+            reg_no: Student registration number
+            name: Student name
+            sheet_name: Sheet name in the Student Sheet
+            
+        Returns:
+            Student dict if BOTH match, None otherwise
+        """
+        try:
+            result = self.sheets.values().get(
+                spreadsheetId=self.student_sheet_id,
+                range=f'{sheet_name}!A:B'
+            ).execute()
+            
+            values = result.get('values', [])
+            if not values or len(values) < 2:
+                print("[SheetsService] No student data found in sheet")
+                return None
+            
+            # Normalize inputs
+            input_reg_no = self._normalize_reg_no(reg_no)
+            input_name = self._normalize_name(name)
+            
+            print(f"[SheetsService] Validating: reg_no='{input_reg_no}', name='{input_name}'")
+            
+            for row in values[1:]:  # Skip header
+                if row and len(row) >= 2:
+                    sheet_reg_no = self._normalize_reg_no(row[0])
+                    sheet_name_val = self._normalize_name(row[1])
+                    
+                    # BOTH must match
+                    if sheet_reg_no == input_reg_no and sheet_name_val == input_name:
+                        print(f"[SheetsService] Match found: {row[0]}, {row[1]}")
+                        return {
+                            'reg_no': row[0],
+                            'name': row[1]
+                        }
+            
+            print(f"[SheetsService] No match found for reg_no='{reg_no}', name='{name}'")
+            return None
+            
+        except Exception as e:
+            print(f"[SheetsService] Error validating student: {e}")
+            return None
+    
+    def _normalize_reg_no(self, reg_no: str) -> str:
+        """
+        Normalize registration number for comparison.
+        - Convert to uppercase
+        - Remove spaces, dots, and special characters
+        """
+        import re
+        if not reg_no:
+            return ''
+        # Remove all non-alphanumeric characters and convert to uppercase
+        return re.sub(r'[^A-Z0-9]', '', reg_no.upper())
+    
+    def _normalize_name(self, name: str) -> str:
+        """
+        Normalize student name for comparison.
+        - Convert to uppercase
+        - Remove spaces, dots, and punctuation
+        - Sort characters to handle order variations (e.g., "S RAHUL" vs "RAHUL S")
+        """
+        import re
+        if not name:
+            return ''
+        # Remove all non-alphabetic characters and convert to uppercase
+        cleaned = re.sub(r'[^A-Z]', '', name.upper())
+        return cleaned
     
     def get_all_students_with_marks(self, sheet_name: str = 'Sheet1') -> List[Dict]:
         """

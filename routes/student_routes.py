@@ -134,38 +134,11 @@ def start_viva(experiment_id):
             flash('You have already completed this viva.', 'info')
             return redirect(url_for('student.view_marks', viva_id=existing_session.id))
         elif existing_session.status == 'in_progress':
-            return redirect(url_for('student.attempt_viva', viva_session_id=existing_session.id))
+            # Resume existing session - redirect to secure exam
+            return redirect(url_for('viva.secure_exam', experiment_id=experiment_id))
     
-    # Create new session
-    try:
-        viva_session = VivaSession(
-            student_id=current_user.id,
-            schedule_id=schedule.id,
-            experiment_id=experiment_id,
-            status='in_progress',
-            total_marks=10,
-            started_at=datetime.utcnow()
-        )
-        
-        # Generate MCQ questions using Perplexity AI
-        questions = perplexity_generate_mcqs(
-            experiment_title=experiment.title,
-            experiment_description=experiment.description or '',
-            lab_name=experiment.lab_config.lab_name,
-            student_id=current_user.id,
-            num_questions=10
-        )
-        viva_session.generated_questions = questions
-        
-        schedule.enrolled_count += 1
-        db.session.add(viva_session)
-        db.session.commit()
-        
-        return redirect(url_for('student.attempt_viva', viva_session_id=viva_session.id))
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Error starting viva: {str(e)}. Please try again.', 'danger')
-        return redirect(url_for('student.dashboard'))
+    # Redirect to secure exam window - session will be created there
+    return redirect(url_for('viva.secure_exam', experiment_id=experiment_id))
 
 
 @student_bp.route('/viva/attempt/<int:viva_session_id>')

@@ -50,12 +50,17 @@ def create_app(config_name='development'):
     from routes.teacher_routes import teacher_bp
     from routes.api_routes import api_bp
     from routes.chatbot_routes import chatbot_bp
+    from routes.viva_routes import viva_bp  # Unified viva/exam routes
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(student_bp, url_prefix='/student')
     app.register_blueprint(teacher_bp, url_prefix='/teacher')
     app.register_blueprint(api_bp, url_prefix='/api')
     app.register_blueprint(chatbot_bp, url_prefix='/chatbot')
+    app.register_blueprint(viva_bp, url_prefix='/viva')  # Secure viva exam
+    
+    # CSRF exemption for viva API endpoints (same-session auth)
+    csrf.exempt(viva_bp)
     
     # Create tables - needs app_context
     with app.app_context():

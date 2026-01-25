@@ -107,9 +107,7 @@
     </footer>
 
     <script src="{{ url_for('static', filename='js/security.js') }}"></script>
-    {% if current_user.is_authenticated %}
-    <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
-    {% endif %}
+    {# ISOLATION: Chatbot JS is NOT loaded globally. It must be included only on AI Assistant page. #}
     <script>
         // Hamburger menu toggle
         document.querySelector('.hamburger').addEventListener('click', function () {

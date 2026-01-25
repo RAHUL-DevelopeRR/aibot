@@ -11,8 +11,16 @@ import random
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY")
 PERPLEXITY_API_URL = "https://api.perplexity.ai/chat/completions"
+
+
+def _get_api_key():
+    """Get API key lazily to ensure .env is loaded"""
+    key = os.getenv("PERPLEXITY_API_KEY")
+    if key:
+        # Remove any whitespace/newlines from key
+        key = key.strip().replace('\n', '').replace('\r', '')
+    return key
 
 
 def get_chat_response(messages, context=None):
@@ -26,6 +34,15 @@ def get_chat_response(messages, context=None):
     Returns:
         dict with 'success', 'response' or 'error'
     """
+    api_key = _get_api_key()
+    
+    if not api_key:
+        logger.error("PERPLEXITY_API_KEY not set in environment")
+        return {
+            'success': False,
+            'error': "AI service not configured. Please contact administrator."
+        }
+    
     try:
         # Build system message with context
         system_message = """You are an intelligent AI assistant for the Lab Viva Assistant platform. 
@@ -43,7 +60,7 @@ Be helpful, educational, and encouraging. Keep responses concise but informative
 
         # Prepare the API request
         headers = {
-            "Authorization": f"Bearer {PERPLEXITY_API_KEY}",
+            "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
         }
 
@@ -71,7 +88,7 @@ Be helpful, educational, and encouraging. Keep responses concise but informative
 
         if response.status_code == 200:
             data = response.json()
-            assistant_message = data['choices']['message']['content']
+            assistant_message = data['choices'][0]['message']['content']
             return {
                 'success': True,
                 'response': assistant_message
@@ -173,8 +190,9 @@ def generate_mcq_questions(experiment_title, experiment_description, lab_name, s
     
     logger.info(f"Generating MCQs with seed {unique_seed} for student_id={student_id}, experiment={experiment_title}")
     
-    # Check if API key is configured
-    if not PERPLEXITY_API_KEY:
+    # Check if API key is configured using lazy loader
+    api_key = _get_api_key()
+    if not api_key:
         logger.error("PERPLEXITY_API_KEY not set - using fallback questions")
         return _generate_fallback_mcqs(experiment_title, num_questions)
     
@@ -212,7 +230,7 @@ Return ONLY a valid JSON array with this exact structure (no markdown, no explan
 
     try:
         headers = {
-            "Authorization": f"Bearer {PERPLEXITY_API_KEY}",
+            "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
         }
 
@@ -239,7 +257,7 @@ Return ONLY a valid JSON array with this exact structure (no markdown, no explan
 
         if response.status_code == 200:
             data = response.json()
-            response_text = data['choices']['message']['content'].strip()
+            response_text = data['choices'][0]['message']['content'].strip()
             
             # Clean up response if it has markdown code blocks
             if response_text.startswith('```'):
