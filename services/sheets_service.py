@@ -33,7 +33,6 @@ class SheetsService:
         if not SHEETS_AVAILABLE:
             raise ImportError("google-api-python-client and google-auth are required. Install with: pip install google-api-python-client google-auth")
         
-        creds_path = os.environ.get('GOOGLE_SHEETS_CREDENTIALS_PATH')
         # Student Sheet for entering Viva marks
         self.student_sheet_id = os.environ.get('GOOGLE_SHEET_ID')
         # Teacher Sheet for retrieving teacher details and experiments
@@ -42,13 +41,31 @@ class SheetsService:
         # Keep legacy reference for backward compatibility
         self.sheet_id = self.student_sheet_id
         
-        if not creds_path or not self.student_sheet_id:
-            raise ValueError("GOOGLE_SHEETS_CREDENTIALS_PATH and GOOGLE_SHEET_ID environment variables are required")
+        if not self.student_sheet_id:
+            raise ValueError("GOOGLE_SHEET_ID environment variable is required")
         
-        if not os.path.exists(creds_path):
-            raise FileNotFoundError(f"Credentials file not found: {creds_path}")
+        # Try GOOGLE_CREDENTIALS_JSON first (JSON content directly), then fall back to file path
+        creds_json = os.environ.get('GOOGLE_CREDENTIALS_JSON')
+        creds_path = os.environ.get('GOOGLE_SHEETS_CREDENTIALS_PATH')
         
-        credentials = Credentials.from_service_account_file(creds_path, scopes=self.SCOPES)
+        if creds_json:
+            # Parse JSON content from environment variable
+            import json
+            try:
+                creds_info = json.loads(creds_json)
+                credentials = Credentials.from_service_account_info(creds_info, scopes=self.SCOPES)
+                print("[SheetsService] Using credentials from GOOGLE_CREDENTIALS_JSON")
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Invalid JSON in GOOGLE_CREDENTIALS_JSON: {e}")
+        elif creds_path:
+            # Fall back to file path
+            if not os.path.exists(creds_path):
+                raise FileNotFoundError(f"Credentials file not found: {creds_path}")
+            credentials = Credentials.from_service_account_file(creds_path, scopes=self.SCOPES)
+            print(f"[SheetsService] Using credentials from file: {creds_path}")
+        else:
+            raise ValueError("Either GOOGLE_CREDENTIALS_JSON or GOOGLE_SHEETS_CREDENTIALS_PATH environment variable is required")
+        
         self.service = build('sheets', 'v4', credentials=credentials)
         self.sheets = self.service.spreadsheets()
     
