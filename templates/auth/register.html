@@ -419,42 +419,46 @@
     const studentFields = document.getElementById('studentFields');
     const teacherFields = document.getElementById('teacherFields');
 
+    function toggleRequiredAttributes() {
+        const selectedRole = document.querySelector('input[name="role"]:checked').value;
+
+        if (selectedRole === 'student') {
+            // Show student, hide teacher
+            studentFields.style.display = 'flex';
+            teacherFields.style.display = 'none';
+
+            // Enable required on student fields
+            studentFields.querySelectorAll('input[data-required="true"]').forEach(i => i.setAttribute('required', ''));
+            studentFields.querySelectorAll('input[required]').forEach(i => i.setAttribute('data-required', 'true'));
+
+            // Disable required on teacher fields
+            teacherFields.querySelectorAll('input[required]').forEach(i => {
+                i.setAttribute('data-required', 'true');
+                i.removeAttribute('required');
+            });
+        } else {
+            // Show teacher, hide student
+            studentFields.style.display = 'none';
+            teacherFields.style.display = 'flex';
+
+            // Enable required on teacher fields
+            teacherFields.querySelectorAll('input[data-required="true"]').forEach(i => i.setAttribute('required', ''));
+            teacherFields.querySelectorAll('input[required]').forEach(i => i.setAttribute('data-required', 'true'));
+
+            // Disable required on student fields
+            studentFields.querySelectorAll('input[required]').forEach(i => {
+                i.setAttribute('data-required', 'true');
+                i.removeAttribute('required');
+            });
+        }
+    }
+
+    // Listen for role changes
     roleInputs.forEach(input => {
-        input.addEventListener('change', function () {
-            if (this.value === 'student') {
-                studentFields.style.display = 'flex';
-                teacherFields.style.display = 'none';
-            } else {
-                studentFields.style.display = 'none';
-                teacherFields.style.display = 'flex';
-            }
-        });
+        input.addEventListener('change', toggleRequiredAttributes);
     });
 
-    // Copy teacher fields to main form fields before submit
-    document.getElementById('registerForm').addEventListener('submit', function (e) {
-        const role = document.querySelector('input[name="role"]:checked').value;
-        if (role === 'teacher') {
-            const inputs = {
-                'teacher_name': 'name',
-                'teacher_email': 'email',
-                'teacher_password': 'password',
-                'teacher_confirm': 'confirm_password'
-            };
-            for (const [src, dst] of Object.entries(inputs)) {
-                const srcInput = document.querySelector(`input[name="${src}"]`);
-                if (srcInput && srcInput.value) {
-                    let dstInput = document.querySelector(`input[name="${dst}"][type="hidden"]`);
-                    if (!dstInput) {
-                        dstInput = document.createElement('input');
-                        dstInput.type = 'hidden';
-                        dstInput.name = dst;
-                        this.appendChild(dstInput);
-                    }
-                    dstInput.value = srcInput.value;
-                }
-            }
-        }
-    });
+    // Initialize on page load
+    toggleRequiredAttributes();
 </script>
 {% endblock %}
