@@ -59,13 +59,15 @@ def login():
         # For teachers: Use traditional email/password login
         else:
             email = request.form.get('email', '').strip()
-            if not all([email, password]):
-                flash('Email and password are required for teachers.', 'danger')
+            faculty_password = request.form.get('faculty_password', '').strip()
+            
+            if not all([email, faculty_password]):
+                flash('Email and password are required for faculty.', 'danger')
                 return redirect(url_for('auth.login'))
             
             user = User.query.filter_by(email=email, role='teacher').first()
             
-            if user and user.check_password(password):
+            if user and user.check_password(faculty_password):
                 login_user(user, remember=True)
                 return redirect(url_for('teacher.dashboard'))
             else:
@@ -139,29 +141,35 @@ def register():
             
         else:
             # Teachers: Traditional registration with email/password
-            if not all([name, email, password]):
-                flash('Name, Email, and Password are required for teachers.', 'danger')
+            # Read teacher-specific form fields
+            teacher_name = request.form.get('teacher_name', '').strip()
+            teacher_email = request.form.get('teacher_email', '').strip()
+            teacher_password = request.form.get('teacher_password', '').strip()
+            teacher_confirm = request.form.get('teacher_confirm', '').strip()
+            
+            if not all([teacher_name, teacher_email, teacher_password]):
+                flash('Name, Email, and Password are required for faculty.', 'danger')
                 return redirect(url_for('auth.register'))
             
-            if len(password) < 8:
-                flash('Password must be at least 8 characters.', 'danger')
+            if len(teacher_password) < 6:
+                flash('Password must be at least 6 characters.', 'danger')
                 return redirect(url_for('auth.register'))
             
-            if password != confirm_password:
+            if teacher_password != teacher_confirm:
                 flash('Passwords do not match.', 'danger')
                 return redirect(url_for('auth.register'))
             
-            if User.query.filter_by(email=email).first():
+            if User.query.filter_by(email=teacher_email).first():
                 flash('Email already registered.', 'danger')
                 return redirect(url_for('auth.register'))
             
             user = User(
-                name=name,
-                email=email,
-                roll_number=roll_number or '',
+                name=teacher_name,
+                email=teacher_email,
+                roll_number='',
                 role='teacher'
             )
-            user.set_password(password)
+            user.set_password(teacher_password)
         
         db.session.add(user)
         db.session.commit()
