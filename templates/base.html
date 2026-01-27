@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{% block title %}KR Viva Assistant{% endblock %}</title>
+    <title>{% block title %}MKCE Viva Assistant{% endblock %}</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,10 +20,10 @@
     <nav class="navbar">
         <div class="nav-container">
             <a href="/" class="navbar-brand">
-                <!-- KR Logo -->
-                <img src="https://mkce.ac.in/images/MKCE%20Logo.png" alt="KR Logo" class="brand-logo"
+                <!-- MKCE Logo -->
+                <img src="https://mkce.ac.in/images/MKCE%20Logo.png" alt="MKCE Logo" class="brand-logo"
                     style="height: 40px; width: auto;">
-                <span class="brand-text">KR Viva Assistant</span>
+                <span class="brand-text">MKCE Viva Assistant</span>
             </a>
             <ul class="nav-menu">
                 {% if current_user.is_authenticated %}
@@ -38,7 +38,7 @@
                     </a></li>
                 <li><a href="{{ url_for('chatbot.chatbot_widget') }}" class="nav-link">
                         <span class="nav-icon ai-icon"><i class="fas fa-graduation-cap"></i></span>
-                        <span>KR Assistant</span>
+                        <span>MKCE Assistant</span>
                     </a></li>
                 {% elif current_user.role == 'teacher' %}
                 <li><a href="{{ url_for('teacher.dashboard') }}" class="nav-link">
@@ -55,7 +55,7 @@
                     </a></li>
                 <li><a href="{{ url_for('chatbot.chatbot_widget') }}" class="nav-link">
                         <span class="nav-icon ai-icon"><i class="fas fa-graduation-cap"></i></span>
-                        <span>KR Assistant</span>
+                        <span>MKCE Assistant</span>
                     </a></li>
                 {% endif %}
                 <li class="user-menu">
@@ -106,11 +106,11 @@
     <footer class="footer">
         <div class="footer-content">
             <div class="footer-brand">
-                <img src="https://mkce.ac.in/images/MKCE%20Logo.png" alt="KR Logo"
+                <img src="https://mkce.ac.in/images/MKCE%20Logo.png" alt="MKCE Logo"
                     style="height: 30px; width: auto; margin-right: 10px;">
-                <span>KR Viva Assistant</span>
+                <span>MKCE Viva Assistant</span>
             </div>
-            <p>© KR Group – KR CONNECT | Developed & Maintained by <strong>S Rahul</strong></p>
+            <p>© MKCE – M. Kumarasamy College of Engineering | Developed & Maintained by <strong>S Rahul</strong></p>
         </div>
     </footer>
 

@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 
-{% block title %}KR Viva Assistant - AI Study Helper{% endblock %}
+{% block title %}MKCE Viva Assistant - AI Study Helper{% endblock %}
 
 {% block content %}
 <div class="chatbot-page">
     <div class="chatbot-container">
         <div class="chatbot-header">
             <div class="chatbot-title">
-                <div class="kr-assistant-icon">
+                <div class="mkce-assistant-icon">
                     <i class="fas fa-graduation-cap"></i>
                 </div>
                 <div class="chatbot-title-text">
-                    <span class="title-main">KR Viva Assistant</span>
+                    <span class="title-main">MKCE Viva Assistant</span>
                     <span class="title-sub">AI-Powered Study Helper</span>
                 </div>
             </div>
@@ -28,7 +28,7 @@
                 </div>
                 <div class="message-content">
                     <p><strong>Hello {{ current_user.name }}!</strong> 👋</p>
-                    <p>I'm your KR Viva Assistant, here to help you excel in your lab examinations. I can:</p>
+                    <p>I'm your MKCE Viva Assistant, here to help you excel in your lab examinations. I can:</p>
                     <ul>
                         <li>Explain concepts for your lab experiments</li>
                         <li>Answer questions about data structures & algorithms</li>
@@ -67,7 +67,7 @@
 </div>
 
 <style>
-    /* KR CONNECT Chatbot Theme */
+    /* MKCE Chatbot Theme */
     .chatbot-page {
         min-height: calc(100vh - 140px);
         display: flex;
@@ -105,7 +105,7 @@
         gap: 14px;
     }
 
-    .kr-assistant-icon {
+    .mkce-assistant-icon {
         width: 48px;
         height: 48px;
         background: rgba(255, 255, 255, 0.15);
@@ -509,7 +509,7 @@
                 },
                 body: JSON.stringify({
                     messages: conversationHistory,
-                    context: 'Lab Viva preparation - KR Viva Assistant'
+                    context: 'Lab Viva preparation - MKCE Viva Assistant'
                 })
             });
 

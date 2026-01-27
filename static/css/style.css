@@ -1,14 +1,14 @@
-/* ==================== ROOT & VARIABLES - KR CONNECT THEME ==================== */
+/* ==================== ROOT & VARIABLES - MKCE THEME ==================== */
 :root {
-    /* KR CONNECT Brand Colors */
-    --kr-blue: #003366;
-    --kr-blue-dark: #002244;
-    --kr-blue-light: #004488;
-    --kr-red: #C41E3A;
-    --kr-red-dark: #A01830;
-    --kr-white: #FFFFFF;
+    /* MKCE Brand Colors */
+    --mkce-blue: #003366;
+    --mkce-blue-dark: #002244;
+    --mkce-blue-light: #004488;
+    --mkce-red: #C41E3A;
+    --mkce-red-dark: #A01830;
+    --mkce-white: #FFFFFF;
 
-    /* Primary theme using KR colors */
+    /* Primary theme using MKCE colors */
     --primary: linear-gradient(135deg, #003366 0%, #004488 100%);
     --primary-color: #003366;
     --secondary-color: #C41E3A;
@@ -113,7 +113,7 @@ a:hover {
     padding: 0 20px;
 }
 
-/* ==================== NAVBAR - KR CONNECT ==================== */
+/* ==================== NAVBAR - MKCE ==================== */
 .navbar {
     background: linear-gradient(135deg, #003366 0%, #004488 100%);
     box-shadow: 0 4px 20px rgba(0, 51, 102, 0.3);

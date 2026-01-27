@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Login - KR Viva Assistant{% endblock %}
+{% block title %}Login - MKCE Viva Assistant{% endblock %}
 
 {% block content %}
 <div class="kr-auth-container">
@@ -8,8 +8,8 @@
         <!-- Left Panel - Branding -->
         <div class="kr-auth-brand">
             <div class="brand-content">
-                <img src="https://mkce.ac.in/images/MKCE%20Logo.png" alt="KR Logo" class="auth-logo">
-                <h1>KR Viva Assistant</h1>
+                <img src="https://mkce.ac.in/images/MKCE%20Logo.png" alt="MKCE Logo" class="auth-logo">
+                <h1>MKCE Viva Assistant</h1>
                 <p class="tagline">M. Kumarasamy College of Engineering</p>
                 <div class="brand-features">
                     <div class="feature">
@@ -27,7 +27,7 @@
                 </div>
             </div>
             <div class="brand-footer">
-                <p>Part of <strong>KR CONNECT</strong> Ecosystem</p>
+                <p>Part of <strong>M. Kumarasamy College of Engineering</strong></p>
             </div>
         </div>
 
@@ -36,7 +36,7 @@
             <div class="kr-auth-box">
                 <div class="auth-header">
                     <h2>Welcome Back</h2>
-                    <p>Sign in to continue to KR Viva</p>
+                    <p>Sign in to continue to MKCE Viva</p>
                 </div>
 
                 <form method="POST" class="kr-auth-form" id="loginForm">
@@ -100,7 +100,7 @@
                 </form>
 
                 <div class="auth-footer">
-                    <p>New to KR Viva? <a href="{{ url_for('auth.register') }}">Create Account</a></p>
+                    <p>New to MKCE Viva? <a href="{{ url_for('auth.register') }}">Create Account</a></p>
                 </div>
             </div>
         </div>
@@ -108,7 +108,7 @@
 </div>
 
 <style>
-    /* KR CONNECT Auth Styles */
+    /* MKCE Auth Styles */
     .kr-auth-container {
         min-height: calc(100vh - 80px);
         background: linear-gradient(135deg, #003366 0%, #001a33 100%);
