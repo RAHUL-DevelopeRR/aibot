@@ -15,6 +15,10 @@ class Config:
     
     # Security headers
     SEND_FILE_MAX_AGE_DEFAULT = 31536000
+    
+    # Java Backend API Configuration
+    BACKEND_API_URL = os.getenv('BACKEND_API_URL', 'http://localhost:8080')
+    USE_JAVA_BACKEND = os.getenv('USE_JAVA_BACKEND', 'true').lower() == 'true'
 
 
 class DevelopmentConfig(Config):

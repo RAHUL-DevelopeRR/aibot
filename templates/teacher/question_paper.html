@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Question Paper Generator - MKCE{% endblock %}
+
+{% block content %}
+<style>
+    .qp-container {
+        width: 100%;
+        min-height: calc(100vh - 70px);
+        background: #f9fafb;
+        margin: 0;
+        padding: 0;
+    }
+
+    .qp-container iframe {
+        width: 100%;
+        min-height: calc(100vh - 70px);
+        border: none;
+    }
+</style>
+
+<div class="qp-container">
+    <iframe src="{{ url_for('static', filename='qp_app/index.html') }}" title="Question Paper Generator"
+        allowfullscreen></iframe>
+</div>
+{% endblock %}

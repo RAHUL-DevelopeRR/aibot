@@ -73,6 +73,57 @@ def shuffle_options(options, seed):
 
 def generate_mcq_with_perplexity(topic: str, num_questions: int = 10, difficulty: str = "medium", session_id: str = None) -> dict:
     """
+    Generate MCQs - First tries Java Backend, falls back to direct Perplexity API.
+    
+    The Java backend is preferred because:
+    - Questions are stored in database for scoring
+    - Centralized AI call management
+    - Better audit trail
+    
+    Args:
+        topic: The experiment topic for MCQ generation
+        num_questions: Number of questions to generate (default 10)
+        difficulty: Question difficulty level
+        session_id: Unique session identifier for randomization
+        
+    Returns:
+        dict with 'questions' list or 'error' message
+    """
+    
+    # Try Java Backend first
+    try:
+        from services.backend_service import get_backend_service
+        backend = get_backend_service()
+        
+        if backend.is_enabled:
+            print(f"[VivaService] Attempting Java backend for topic: {topic}")
+            result = backend.create_viva(topic, num_questions, difficulty)
+            
+            if 'questions' in result and result['questions']:
+                print(f"[VivaService] Java backend returned {len(result['questions'])} questions")
+                # Apply shuffling same as before
+                questions = result['questions']
+                unique_id = session_id[:8] if session_id else str(uuid.uuid4())[:6]
+                random.seed(generate_unique_seed(unique_id, topic))
+                random.shuffle(questions)
+                
+                for idx, question in enumerate(questions):
+                    question['id'] = idx + 1
+                
+                return {"questions": questions}
+            elif result.get('use_fallback'):
+                print(f"[VivaService] Backend unavailable, falling back to Perplexity: {result.get('error')}")
+            else:
+                print(f"[VivaService] Backend error: {result.get('error')}")
+    except Exception as e:
+        print(f"[VivaService] Backend service error: {e}, falling back to Perplexity")
+    
+    # Fallback to direct Perplexity API
+    return _generate_mcq_direct_perplexity(topic, num_questions, difficulty, session_id)
+
+
+def _generate_mcq_direct_perplexity(topic: str, num_questions: int = 10, difficulty: str = "medium", session_id: str = None) -> dict:
+    """
     Generate MCQs using Perplexity API - OPTIMIZED FOR SPEED
     
     Optimizations applied:

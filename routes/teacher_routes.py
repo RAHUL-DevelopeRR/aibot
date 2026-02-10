@@ -188,10 +188,13 @@ def schedule_viva():
             'experiments': Experiment.query.filter_by(lab_config_id=lab.id).order_by(Experiment.experiment_no).all()
         }
     
+    selected_experiment_id = request.args.get('experiment_id', type=int)
+    
     return render_template('teacher/schedule_viva.html', 
                          labs=labs, 
                          experiments_by_lab=experiments_by_lab,
-                         now=datetime.now())
+                         now=datetime.now(),
+                         selected_experiment_id=selected_experiment_id)
 
 
 @teacher_bp.route('/schedule/<int:schedule_id>')

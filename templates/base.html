@@ -21,8 +21,8 @@
         <div class="nav-container">
             <a href="/" class="navbar-brand">
                 <!-- MKCE Logo -->
-                <img src="https://mkce.ac.in/images/MKCE%20Logo.png" alt="MKCE Logo" class="brand-logo"
-                    style="height: 40px; width: auto;">
+                <img src="{{ url_for('static', filename='images/Kumarasamy.jpg') }}" alt="MKCE Logo" class="brand-logo"
+                    style="height: 45px; width: auto; border-radius: 8px;">
                 <span class="brand-text">MKCE Viva Assistant</span>
             </a>
             <ul class="nav-menu">
@@ -52,6 +52,10 @@
                 <li><a href="{{ url_for('teacher.schedule_viva') }}" class="nav-link">
                         <span class="nav-icon"><i class="fas fa-calendar-alt"></i></span>
                         <span>Schedule Viva</span>
+                    </a></li>
+                <li><a href="{{ url_for('qp.qp_home') }}" class="nav-link">
+                        <span class="nav-icon"><i class="fas fa-file-alt"></i></span>
+                        <span>Question Paper</span>
                     </a></li>
                 <li><a href="{{ url_for('chatbot.chatbot_widget') }}" class="nav-link">
                         <span class="nav-icon ai-icon"><i class="fas fa-graduation-cap"></i></span>
@@ -106,8 +110,8 @@
     <footer class="footer">
         <div class="footer-content">
             <div class="footer-brand">
-                <img src="https://mkce.ac.in/images/MKCE%20Logo.png" alt="MKCE Logo"
-                    style="height: 30px; width: auto; margin-right: 10px;">
+                <img src="{{ url_for('static', filename='images/Kumarasamy.jpg') }}" alt="MKCE Logo"
+                    style="height: 35px; width: auto; margin-right: 10px; border-radius: 8px;">
                 <span>MKCE Viva Assistant</span>
             </div>
             <p>© MKCE – M. Kumarasamy College of Engineering | Developed & Maintained by <strong>S Rahul</strong></p>

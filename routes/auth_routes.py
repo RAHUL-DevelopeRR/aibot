@@ -23,38 +23,64 @@ def login():
         password = request.form.get('password', '').strip()
         role = request.form.get('role', '').strip()
         
-        # For students: Validate against Google Sheets + Password
+        # For students: Login via Java Backend (DB only, no Google Sheets check)
         if role == 'student':
             # Password is MANDATORY
-            if not all([roll_number, name, password]):
-                flash('Registration Number, Name, and Password are required.', 'danger')
+            if not all([roll_number, password]):
+                flash('Registration Number and Password are required.', 'danger')
                 return redirect(url_for('auth.login'))
             
-            # Verify against Google Sheets
-            sheets = get_sheets_service()
-            if sheets:
-                student_data = sheets.validate_student_by_reg_and_name(roll_number, name)
-                if not student_data:
-                    flash('Registration number and name not found in student records.', 'danger')
-                    return redirect(url_for('auth.login'))
+            # Authenticate via Java Backend (uses database, NOT Google Sheets)
+            try:
+                from services.backend_service import get_backend_service
+                backend = get_backend_service()
                 
-                # Check if user exists in local database
-                user = User.query.filter_by(roll_number=_normalize_reg_no(roll_number)).first()
-                
-                if not user:
-                    flash('Account not found. Please register first.', 'danger')
-                    return redirect(url_for('auth.register'))
-                
-                # Verify password
-                if not user.check_password(password):
-                    flash('Invalid password.', 'danger')
-                    return redirect(url_for('auth.login'))
-                
-                login_user(user, remember=True)
-                return redirect(url_for('student.dashboard'))
-            else:
-                flash('Unable to connect to student records. Please try again.', 'warning')
+                if backend.is_enabled:
+                    result = backend.login_student(roll_number, password)
+                    
+                    if result.get('success'):
+                        # Create or update local user for flask-login compatibility
+                        normalized_reg = _normalize_reg_no(roll_number)
+                        user = User.query.filter_by(roll_number=normalized_reg).first()
+                        
+                        if not user:
+                            # Create local user record synced from backend
+                            user = User(
+                                name=result.get('name', ''),
+                                email=result.get('email', f"{normalized_reg}@student.local"),
+                                roll_number=normalized_reg,
+                                role='student'
+                            )
+                            user.set_password(password)
+                            db.session.add(user)
+                            db.session.commit()
+                        
+                        # Store JWT token in session for backend API calls
+                        from flask import session
+                        session['backend_token'] = result.get('token')
+                        session['backend_user_id'] = result.get('user_id')
+                        
+                        login_user(user, remember=True)
+                        return redirect(url_for('student.dashboard'))
+                    else:
+                        flash(result.get('error', 'Invalid credentials'), 'danger')
+                        return redirect(url_for('auth.login'))
+            except Exception as e:
+                print(f"[AuthRoutes] Backend auth failed, falling back to local: {e}")
+            
+            # Fallback to local SQLite authentication (offline mode)
+            user = User.query.filter_by(roll_number=_normalize_reg_no(roll_number)).first()
+            
+            if not user:
+                flash('Account not found. Please register first.', 'danger')
+                return redirect(url_for('auth.register'))
+            
+            if not user.check_password(password):
+                flash('Invalid password.', 'danger')
                 return redirect(url_for('auth.login'))
+            
+            login_user(user, remember=True)
+            return redirect(url_for('student.dashboard'))
         
         # For teachers: Use traditional email/password login
         else:
@@ -117,20 +143,48 @@ def register():
             # Normalize Reg_No
             normalized_reg_no = _normalize_reg_no(roll_number)
             
-            # Check if already registered
+            # Check if already registered locally
             if User.query.filter_by(roll_number=normalized_reg_no).first():
                 flash('This registration number is already registered. Please login instead.', 'danger')
                 return redirect(url_for('auth.login'))
             
-            # Password is optional for students (defaults to Reg_No if not provided)
+            # Password defaults to Reg_No if not provided
             if not password:
                 password = roll_number
             
             # Email is optional for students
             if not email:
-                email = f"{normalized_reg_no}@student.local"
+                email = f"{normalized_reg_no.lower()}@mkce.ac.in"
             
-            # Create student user
+            # Try registering via Java Backend first
+            try:
+                from services.backend_service import get_backend_service
+                backend = get_backend_service()
+                
+                if backend.is_enabled:
+                    result = backend.register_student(roll_number, name, password, email)
+                    
+                    if result.get('success'):
+                        # Create local user record synced from backend
+                        user = User(
+                            name=result.get('name', name),
+                            email=result.get('email', email),
+                            roll_number=normalized_reg_no,
+                            role='student'
+                        )
+                        user.set_password(password)
+                        db.session.add(user)
+                        db.session.commit()
+                        
+                        flash('Registration successful! Please log in.', 'success')
+                        return redirect(url_for('auth.login'))
+                    else:
+                        # Backend registration failed - show error but allow local registration
+                        print(f"[AuthRoutes] Backend registration failed: {result.get('error')}")
+            except Exception as e:
+                print(f"[AuthRoutes] Backend registration error, using local: {e}")
+            
+            # Fallback to local-only registration
             user = User(
                 name=name,
                 email=email,

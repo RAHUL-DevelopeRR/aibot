@@ -8,7 +8,7 @@
         <!-- Left Panel - Branding -->
         <div class="kr-auth-brand">
             <div class="brand-content">
-                <img src="https://mkce.ac.in/images/MKCE%20Logo.png" alt="MKCE Logo" class="auth-logo">
+                <img src="{{ url_for('static', filename='images/Kumarasamy.jpg') }}" alt="MKCE Logo" class="auth-logo">
                 <h1>MKCE Viva Assistant</h1>
                 <p class="tagline">M. Kumarasamy College of Engineering</p>
                 <div class="brand-features">
@@ -64,12 +64,6 @@
                         <div class="form-group">
                             <label class="form-label"><i class="fas fa-id-card"></i> Registration Number</label>
                             <input type="text" name="roll_number" class="form-input" placeholder="e.g., 927623BCB041"
-                                required>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label"><i class="fas fa-user"></i> Your Name</label>
-                            <input type="text" name="name" class="form-input" placeholder="As per college records"
                                 required>
                         </div>
 
@@ -144,10 +138,12 @@
     }
 
     .auth-logo {
-        width: 100px;
+        width: 160px;
         height: auto;
         margin-bottom: 20px;
-        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+        border-radius: 12px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
     }
 
     .kr-auth-brand h1 {
