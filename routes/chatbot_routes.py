@@ -1,7 +1,8 @@
 """Chatbot API routes"""
 from flask import Blueprint, request, jsonify, render_template
 from flask_login import login_required, current_user
-from services.perplexity_service import get_chat_response, get_viva_help, generate_practice_questions
+from services.dual_ai_service import get_best_response
+from services.perplexity_service import get_viva_help, generate_practice_questions
 
 chatbot_bp = Blueprint('chatbot', __name__)
 
@@ -21,8 +22,8 @@ def chat():
     if not messages:
         return jsonify({'success': False, 'error': 'No messages provided'}), 400
     
-    # Get response from Perplexity
-    result = get_chat_response(messages, context)
+    # Get best response from dual AI (Perplexity + Gemini)
+    result = get_best_response(messages, context)
     
     if result['success']:
         return jsonify({

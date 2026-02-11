@@ -62,9 +62,13 @@ def login():
                         
                         login_user(user, remember=True)
                         return redirect(url_for('student.dashboard'))
-                    else:
+                    elif 'Backend unavailable' not in result.get('error', ''):
+                        # Real auth failure (wrong password, account not found) — show error
                         flash(result.get('error', 'Invalid credentials'), 'danger')
                         return redirect(url_for('auth.login'))
+                    else:
+                        # Backend is unreachable — fall through to local SQLite auth
+                        print(f"[AuthRoutes] Backend unavailable, falling back to local auth")
             except Exception as e:
                 print(f"[AuthRoutes] Backend auth failed, falling back to local: {e}")
             
