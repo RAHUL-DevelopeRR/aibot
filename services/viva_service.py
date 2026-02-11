@@ -90,35 +90,8 @@ def generate_mcq_with_perplexity(topic: str, num_questions: int = 10, difficulty
         dict with 'questions' list or 'error' message
     """
     
-    # Try Java Backend first
-    try:
-        from services.backend_service import get_backend_service
-        backend = get_backend_service()
-        
-        if backend.is_enabled:
-            print(f"[VivaService] Attempting Java backend for topic: {topic}")
-            result = backend.create_viva(topic, num_questions, difficulty)
-            
-            if 'questions' in result and result['questions']:
-                print(f"[VivaService] Java backend returned {len(result['questions'])} questions")
-                # Apply shuffling same as before
-                questions = result['questions']
-                unique_id = session_id[:8] if session_id else str(uuid.uuid4())[:6]
-                random.seed(generate_unique_seed(unique_id, topic))
-                random.shuffle(questions)
-                
-                for idx, question in enumerate(questions):
-                    question['id'] = idx + 1
-                
-                return {"questions": questions}
-            elif result.get('use_fallback'):
-                print(f"[VivaService] Backend unavailable, falling back to Perplexity: {result.get('error')}")
-            else:
-                print(f"[VivaService] Backend error: {result.get('error')}")
-    except Exception as e:
-        print(f"[VivaService] Backend service error: {e}, falling back to Perplexity")
-    
-    # Fallback to direct Perplexity API
+    # Go directly to Perplexity API (Java backend skipped — not running)
+    print(f"[VivaService] Generating MCQs via Perplexity API for topic: {topic}")
     return _generate_mcq_direct_perplexity(topic, num_questions, difficulty, session_id)
 
 
