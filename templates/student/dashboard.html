@@ -53,6 +53,7 @@
                         <th>Status</th>
                         <th>Marks</th>
                         <th>Action</th>
+                        <th>Video</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -117,6 +118,16 @@
                             <span class="text-muted">Wait for time window</span>
                             {% elif exp_info.status == 'expired' %}
                             <span class="text-danger">Missed</span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if exp_info.experiment.video_url %}
+                            <a href="{{ url_for('media.player', experiment_id=exp_info.experiment.id) }}"
+                                class="btn btn-sm" style="background:#ff6600;color:#fff;">
+                                <i class="fas fa-play"></i> Watch
+                            </a>
                             {% else %}
                             <span class="text-muted">-</span>
                             {% endif %}

@@ -40,6 +40,10 @@
                         <span class="nav-icon ai-icon"><i class="fas fa-graduation-cap"></i></span>
                         <span>MKCE Assistant</span>
                     </a></li>
+                <li><a href="{{ url_for('media.library') }}" class="nav-link">
+                        <span class="nav-icon"><i class="fas fa-film"></i></span>
+                        <span>Videos</span>
+                    </a></li>
                 {% elif current_user.role == 'teacher' %}
                 <li><a href="{{ url_for('teacher.dashboard') }}" class="nav-link">
                         <span class="nav-icon"><i class="fas fa-th-large"></i></span>
@@ -60,6 +64,10 @@
                 <li><a href="{{ url_for('chatbot.chatbot_widget') }}" class="nav-link">
                         <span class="nav-icon ai-icon"><i class="fas fa-graduation-cap"></i></span>
                         <span>MKCE Assistant</span>
+                    </a></li>
+                <li><a href="{{ url_for('media.library') }}" class="nav-link">
+                        <span class="nav-icon"><i class="fas fa-film"></i></span>
+                        <span>Videos</span>
                     </a></li>
                 {% endif %}
                 <li class="user-menu">
