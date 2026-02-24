@@ -14,7 +14,9 @@
 
     <div class="player-container">
         <div class="video-wrapper">
-            <video id="vlc-player" controls preload="metadata">
+            <video id="vlc-player" controls preload="metadata"
+                   aria-label="Experiment {{ experiment.experiment_no }} demonstration video"
+                   title="{{ experiment.title }}">
                 <source src="{{ experiment.video_url }}" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
@@ -111,8 +113,8 @@
         max-height: 540px;
     }
 
-    /* Hide native controls since we have custom ones */
-    .video-wrapper video::-webkit-media-controls {
+    /* Custom controls are shown below the video; native controls serve as fallback */
+    .video-wrapper video.custom-controls-active::-webkit-media-controls {
         display: none !important;
     }
 
@@ -266,7 +268,8 @@
     const speedSelect = document.getElementById('speed-select');
     const timeDisplay = document.getElementById('time-display');
 
-    // Remove native controls since we provide custom ones
+    // Remove native controls only after custom controls are confirmed functional
+    video.classList.add('custom-controls-active');
     video.removeAttribute('controls');
 
     function formatTime(seconds) {
@@ -331,10 +334,15 @@
     });
 
     btnFullscreen.addEventListener('click', function() {
-        if (video.requestFullscreen) {
-            video.requestFullscreen();
-        } else if (video.webkitRequestFullscreen) {
-            video.webkitRequestFullscreen();
+        var container = document.querySelector('.player-container');
+        if (container.requestFullscreen) {
+            container.requestFullscreen();
+        } else if (container.webkitRequestFullscreen) {
+            container.webkitRequestFullscreen();
+        } else if (container.mozRequestFullScreen) {
+            container.mozRequestFullScreen();
+        } else if (container.msRequestFullscreen) {
+            container.msRequestFullscreen();
         }
     });
 
@@ -344,6 +352,45 @@
             video.play();
         } else {
             video.pause();
+        }
+    });
+
+    // Keyboard controls
+    document.addEventListener('keydown', function(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+        switch (e.key) {
+            case ' ':
+                e.preventDefault();
+                if (video.paused) video.play(); else video.pause();
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                video.currentTime = Math.min(video.currentTime + 5, video.duration || 0);
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                video.currentTime = Math.max(video.currentTime - 5, 0);
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                video.volume = Math.min(video.volume + 0.1, 1);
+                volumeBar.value = video.volume * 100;
+                break;
+            case 'ArrowDown':
+                e.preventDefault();
+                video.volume = Math.max(video.volume - 0.1, 0);
+                volumeBar.value = video.volume * 100;
+                break;
+            case 'm':
+                video.muted = !video.muted;
+                btnMute.innerHTML = video.muted
+                    ? '<i class="fas fa-volume-mute"></i>'
+                    : '<i class="fas fa-volume-up"></i>';
+                volumeBar.value = video.muted ? 0 : video.volume * 100;
+                break;
+            case 'f':
+                btnFullscreen.click();
+                break;
         }
     });
 })();
