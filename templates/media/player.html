@@ -1,0 +1,398 @@
+{% extends "base.html" %}
+
+{% block title %}{{ experiment.title }} - Video Player{% endblock %}
+
+{% block content %}
+<div class="media-player-page">
+    <div class="player-header">
+        <a href="{{ url_for('media.library') }}" class="back-link">
+            <i class="fas fa-arrow-left"></i> Video Library
+        </a>
+        <h1><i class="fas fa-play-circle"></i> {{ experiment.title }}</h1>
+        <p class="player-subtitle">{{ lab.lab_name }} — Experiment {{ experiment.experiment_no }}</p>
+    </div>
+
+    <div class="player-container">
+        <div class="video-wrapper">
+            <video id="vlc-player" controls preload="metadata"
+                   aria-label="Experiment {{ experiment.experiment_no }} demonstration video"
+                   title="{{ experiment.title }}">
+                <source src="{{ experiment.video_url }}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+
+        <div class="player-controls-bar">
+            <button id="btn-play" class="ctrl-btn" title="Play/Pause">
+                <i class="fas fa-play"></i>
+            </button>
+            <button id="btn-stop" class="ctrl-btn" title="Stop">
+                <i class="fas fa-stop"></i>
+            </button>
+            <div class="progress-container">
+                <input type="range" id="seek-bar" class="seek-bar" value="0" min="0" max="100" step="0.1">
+                <span id="time-display" class="time-display">0:00 / 0:00</span>
+            </div>
+            <button id="btn-mute" class="ctrl-btn" title="Mute/Unmute">
+                <i class="fas fa-volume-up"></i>
+            </button>
+            <input type="range" id="volume-bar" class="volume-bar" value="100" min="0" max="100">
+            <select id="speed-select" class="speed-select" title="Playback Speed">
+                <option value="0.5">0.5x</option>
+                <option value="0.75">0.75x</option>
+                <option value="1" selected>1x</option>
+                <option value="1.25">1.25x</option>
+                <option value="1.5">1.5x</option>
+                <option value="2">2x</option>
+            </select>
+            <button id="btn-fullscreen" class="ctrl-btn" title="Fullscreen">
+                <i class="fas fa-expand"></i>
+            </button>
+        </div>
+    </div>
+
+    {% if experiment.description %}
+    <div class="video-description">
+        <h3><i class="fas fa-info-circle"></i> Description</h3>
+        <p>{{ experiment.description }}</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .media-player-page {
+        padding: 30px 0;
+        max-width: 960px;
+        margin: 0 auto;
+    }
+
+    .player-header {
+        margin-bottom: 20px;
+    }
+
+    .back-link {
+        color: #667eea;
+        text-decoration: none;
+        font-size: 14px;
+        display: inline-block;
+        margin-bottom: 10px;
+    }
+
+    .back-link:hover {
+        text-decoration: underline;
+    }
+
+    .player-header h1 {
+        color: #333;
+        margin: 0 0 5px 0;
+        font-size: 24px;
+    }
+
+    .player-subtitle {
+        color: #666;
+        margin: 0;
+        font-size: 14px;
+    }
+
+    .player-container {
+        background: #1a1a2e;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .video-wrapper {
+        position: relative;
+        width: 100%;
+        background: #000;
+    }
+
+    .video-wrapper video {
+        width: 100%;
+        display: block;
+        max-height: 540px;
+    }
+
+    /* Custom controls are shown below the video; native controls serve as fallback */
+    .video-wrapper video.custom-controls-active::-webkit-media-controls {
+        display: none !important;
+    }
+
+    .player-controls-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 15px;
+        background: #16213e;
+    }
+
+    .ctrl-btn {
+        background: none;
+        border: none;
+        color: #ff6600;
+        font-size: 16px;
+        cursor: pointer;
+        padding: 6px 10px;
+        border-radius: 4px;
+        transition: background 0.2s;
+    }
+
+    .ctrl-btn:hover {
+        background: rgba(255, 102, 0, 0.15);
+    }
+
+    .progress-container {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .seek-bar {
+        flex: 1;
+        -webkit-appearance: none;
+        appearance: none;
+        height: 5px;
+        background: #333;
+        border-radius: 3px;
+        outline: none;
+        cursor: pointer;
+    }
+
+    .seek-bar::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #ff6600;
+        cursor: pointer;
+    }
+
+    .seek-bar::-moz-range-thumb {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #ff6600;
+        cursor: pointer;
+        border: none;
+    }
+
+    .time-display {
+        color: #ccc;
+        font-size: 12px;
+        white-space: nowrap;
+        font-family: monospace;
+    }
+
+    .volume-bar {
+        width: 80px;
+        -webkit-appearance: none;
+        appearance: none;
+        height: 4px;
+        background: #333;
+        border-radius: 3px;
+        outline: none;
+        cursor: pointer;
+    }
+
+    .volume-bar::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #ff6600;
+        cursor: pointer;
+    }
+
+    .volume-bar::-moz-range-thumb {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #ff6600;
+        cursor: pointer;
+        border: none;
+    }
+
+    .speed-select {
+        background: #1a1a2e;
+        color: #ccc;
+        border: 1px solid #333;
+        border-radius: 4px;
+        padding: 4px 6px;
+        font-size: 12px;
+        cursor: pointer;
+    }
+
+    .video-description {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        margin-top: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .video-description h3 {
+        margin: 0 0 10px 0;
+        color: #333;
+    }
+
+    .video-description p {
+        color: #555;
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    @media (max-width: 768px) {
+        .player-controls-bar {
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .volume-bar {
+            width: 60px;
+        }
+    }
+</style>
+
+<script>
+(function() {
+    const video = document.getElementById('vlc-player');
+    const btnPlay = document.getElementById('btn-play');
+    const btnStop = document.getElementById('btn-stop');
+    const btnMute = document.getElementById('btn-mute');
+    const btnFullscreen = document.getElementById('btn-fullscreen');
+    const seekBar = document.getElementById('seek-bar');
+    const volumeBar = document.getElementById('volume-bar');
+    const speedSelect = document.getElementById('speed-select');
+    const timeDisplay = document.getElementById('time-display');
+
+    // Remove native controls only after custom controls are confirmed functional
+    video.classList.add('custom-controls-active');
+    video.removeAttribute('controls');
+
+    function formatTime(seconds) {
+        const m = Math.floor(seconds / 60);
+        const s = Math.floor(seconds % 60);
+        return m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
+    btnPlay.addEventListener('click', function() {
+        if (video.paused) {
+            video.play();
+        } else {
+            video.pause();
+        }
+    });
+
+    btnStop.addEventListener('click', function() {
+        video.pause();
+        video.currentTime = 0;
+        btnPlay.innerHTML = '<i class="fas fa-play"></i>';
+    });
+
+    video.addEventListener('play', function() {
+        btnPlay.innerHTML = '<i class="fas fa-pause"></i>';
+    });
+
+    video.addEventListener('pause', function() {
+        btnPlay.innerHTML = '<i class="fas fa-play"></i>';
+    });
+
+    video.addEventListener('timeupdate', function() {
+        if (video.duration) {
+            seekBar.value = (video.currentTime / video.duration) * 100;
+            timeDisplay.textContent = formatTime(video.currentTime) + ' / ' + formatTime(video.duration);
+        }
+    });
+
+    seekBar.addEventListener('input', function() {
+        if (video.duration) {
+            video.currentTime = (seekBar.value / 100) * video.duration;
+        }
+    });
+
+    btnMute.addEventListener('click', function() {
+        video.muted = !video.muted;
+        btnMute.innerHTML = video.muted
+            ? '<i class="fas fa-volume-mute"></i>'
+            : '<i class="fas fa-volume-up"></i>';
+        volumeBar.value = video.muted ? 0 : video.volume * 100;
+    });
+
+    volumeBar.addEventListener('input', function() {
+        video.volume = volumeBar.value / 100;
+        video.muted = video.volume === 0;
+        btnMute.innerHTML = video.volume === 0
+            ? '<i class="fas fa-volume-mute"></i>'
+            : '<i class="fas fa-volume-up"></i>';
+    });
+
+    speedSelect.addEventListener('change', function() {
+        video.playbackRate = parseFloat(speedSelect.value);
+    });
+
+    btnFullscreen.addEventListener('click', function() {
+        var container = document.querySelector('.player-container');
+        if (container.requestFullscreen) {
+            container.requestFullscreen();
+        } else if (container.webkitRequestFullscreen) {
+            container.webkitRequestFullscreen();
+        } else if (container.mozRequestFullScreen) {
+            container.mozRequestFullScreen();
+        } else if (container.msRequestFullscreen) {
+            container.msRequestFullscreen();
+        }
+    });
+
+    // Click video to play/pause
+    video.addEventListener('click', function() {
+        if (video.paused) {
+            video.play();
+        } else {
+            video.pause();
+        }
+    });
+
+    // Keyboard controls
+    document.addEventListener('keydown', function(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+        switch (e.key) {
+            case ' ':
+                e.preventDefault();
+                if (video.paused) video.play(); else video.pause();
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                video.currentTime = Math.min(video.currentTime + 5, video.duration || 0);
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                video.currentTime = Math.max(video.currentTime - 5, 0);
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                video.volume = Math.min(video.volume + 0.1, 1);
+                volumeBar.value = video.volume * 100;
+                break;
+            case 'ArrowDown':
+                e.preventDefault();
+                video.volume = Math.max(video.volume - 0.1, 0);
+                volumeBar.value = video.volume * 100;
+                break;
+            case 'm':
+                video.muted = !video.muted;
+                btnMute.innerHTML = video.muted
+                    ? '<i class="fas fa-volume-mute"></i>'
+                    : '<i class="fas fa-volume-up"></i>';
+                volumeBar.value = video.muted ? 0 : video.volume * 100;
+                break;
+            case 'f':
+                btnFullscreen.click();
+                break;
+        }
+    });
+})();
+</script>
+{% endblock %}

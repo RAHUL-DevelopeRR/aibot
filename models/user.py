@@ -107,6 +107,7 @@ class Experiment(db.Model):
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text)
     materials_text = db.Column(db.Text)  # Experiment-specific materials
+    video_url = db.Column(db.String(500))  # Optional video URL for lab demonstration
     total_marks = db.Column(db.Integer, default=10)  # 10 MCQs x 1 mark each
     duration_minutes = db.Column(db.Integer, default=15)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

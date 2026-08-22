@@ -52,6 +52,7 @@ def create_app(config_name='development'):
     from routes.chatbot_routes import chatbot_bp
     from routes.viva_routes import viva_bp  # Unified viva/exam routes
     from routes.qp_routes import qp_bp  # Question Paper Generator
+    from routes.media_routes import media_bp  # VLC media player
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(student_bp, url_prefix='/student')
@@ -60,6 +61,7 @@ def create_app(config_name='development'):
     app.register_blueprint(chatbot_bp, url_prefix='/chatbot')
     app.register_blueprint(viva_bp, url_prefix='/viva')  # Secure viva exam
     app.register_blueprint(qp_bp)  # QP Generator (url_prefix='/qp' set in blueprint)
+    app.register_blueprint(media_bp, url_prefix='/media')  # VLC media player
     
     # CSRF exemption for API endpoints (same-session auth, JSON payloads)
     csrf.exempt(viva_bp)
